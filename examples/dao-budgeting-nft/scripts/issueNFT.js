@@ -29,8 +29,8 @@ const budgetNFTAddress = deployedBudgetNFT.address;
 
 
 //address of owner of option here..need to change this
-const _receiver = "0x5966aa11c794893774a382d9a19743B8be6BFFd1";
-const _sender = "0x9421FE8eCcAfad76C3A9Ec8f9779fAfA05A836B3";
+const _receiver = "0xF538b8d65C4ae4D09503A0F06F38486019750Aa4";
+const _sender = "0x9C040e2d6Fd83A8b35069aa7154b69674961e0F7";
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 
@@ -48,7 +48,7 @@ async function main() {
   const nonce = await web3.eth.getTransactionCount(_sender, 'latest'); // nonce starts counting from 0
 
 
-  const txData = (await budgetNFT.methods.issueNFT(_receiver, "38580246913")).encodeABI() //~100 per mo
+  const txData = (await budgetNFT.methods.issueNFT(_receiver, "38580246913")).encodeABI() //~0.1 DAI per mo
 
   //send the tx to the contract
   let tx = {
