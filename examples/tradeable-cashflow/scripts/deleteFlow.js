@@ -1,4 +1,6 @@
+require("dotenv");
 const SuperfluidSDK = require("@superfluid-finance/js-sdk");
+const Superfluid_ABI = require("@superfluid-finance/js-sdk/src/abi");
 //using fDAIx on Goerli
 const fDAIx = "0xF2d68898557cCb2Cf4C10c3Ef2B034b2a69DAD00";
 const TradeableCashflow = artifacts.require("TradeableCashflow");
@@ -21,7 +23,7 @@ module.exports = async function main(callback) {
             token: fDAIx
         });
 
-        await carol.flow({recipient: tradeableCashflowAddress, flowRate: "3000000"})
+        await carol.flow({recipient: tradeableCashflowAddress, flowRate: "0"})
          
         callback(0)
     } catch (error) {
