@@ -10,7 +10,7 @@ const acceptedToken = "0xF2d68898557cCb2Cf4C10c3Ef2B034b2a69DAD00"
 const TradeableCashflow = artifacts.require("TradeableCashflow");
 
 
-module.exports = function(deployer) {
+module.exports = function(deployer, networks, accounts) {
   deployer.deploy(
     TradeableCashflow, 
     owner, 
