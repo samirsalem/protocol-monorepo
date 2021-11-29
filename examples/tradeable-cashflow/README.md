@@ -9,9 +9,9 @@ and the second contains the logic which condenses the streams, and has a
 function which changes the receiver of the condensed stream.
 
 # Usage
-1) Create a .env file and add your own information using the format in .env.template
-2) Run truffle migrate --network goerli to deploy to the Goerli testnet
-3) Interact with your contracts using app.superfluid/dashboard or by running the scripts in the ./scripts folder
+1) Create a .env file and add your own information using the format in ```.env.template```
+2) Run ```truffle migrate --network goerli``` to deploy to the Goerli testnet
+3) Interact with your contracts using app.superfluid/dashboard or by running the scripts in the ```./scripts``` folder
 
 To interact with the Tradeable Cashflow contract using scripts, you can run the following command after deploying:
 
