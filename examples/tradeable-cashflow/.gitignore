@@ -1,5 +1,7 @@
 /data
 /node_modules
+/artifacts
+/deployments
 /build
 /coverage.json
 /coverage
