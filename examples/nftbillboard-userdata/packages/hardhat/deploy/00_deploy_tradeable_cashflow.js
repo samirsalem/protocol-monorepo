@@ -1,9 +1,4 @@
-require("dotenv").config();
-
-//mumbai addresses - change if using a different network
-// const host = '0xEB796bdb90fFA0f28255275e16936D25d3418603';
-// const cfa = '0x49e565Ed1bdc17F3d220f72DF0857C26FA83F873';
-// const fDAIx = '0x5D8B4C2554aeB7e86F387B4d6c00Ac33499Ed01f';
+require("dotenv");
 
 const deployFramework = require("@superfluid-finance/ethereum-contracts/scripts/deploy-framework");
 const deployTestToken = require("@superfluid-finance/ethereum-contracts/scripts/deploy-test-token");
@@ -11,13 +6,14 @@ const deploySuperToken = require("@superfluid-finance/ethereum-contracts/scripts
 const SuperfluidSDK = require("@superfluid-finance/js-sdk");
 
 //your address here...
-const owner = process.env.OWNER_ADDRESS;
+const owner = `${process.env.NFT_OWNER_ADDRESS}`;
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
 
   const { deployer } = await getNamedAccounts();
   console.log(deployer);
+
 
   const errorHandler = (err) => {
     if (err) throw err;
@@ -45,15 +41,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   await sf.initialize();
 
-  console.log(sf.host.address)
-  console.log(sf.agreements.cfa.address);
-  console.log(sf.tokens.fDAIx.address)
-
+  console.log(owner)
   await deploy("TradeableCashflow", {
     from: deployer,
-    args: [deployer, 'nifty_billboard', 'NFTBoard', sf.host.address, sf.agreements.cfa.address, sf.tokens.fDAIx.address],
+    args: [owner, 'nifty_billboard', 'NFTBoard', sf.host.address, sf.agreements.cfa.address, sf.tokens.fDAIx.address],
     log: true,
-  })
+  });
 
 };
-module.exports.tags = ["YourContract"];
+module.exports.tags = ["TradeableCashflow"];

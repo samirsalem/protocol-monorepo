@@ -113,19 +113,19 @@ export const NETWORKS = {
     rpcUrl: `https://arb1.arbitrum.io/rpc`,
     gasPrice: 0,
   },
-  localOptimismL1: {
-    name: "localOptimismL1",
-    color: "#f01a37",
-    chainId: 31337,
-    blockExplorer: "",
-    rpcUrl: "http://" + window.location.hostname + ":9545",
-  },
+  // localOptimismL1: {
+  //   name: "localOptimismL1",
+  //   color: "#f01a37",
+  //   chainId: 31337,
+  //   blockExplorer: "",
+  //   rpcUrl: "http://" + window.location.hostname + ":1545",
+  // },
   localOptimism: {
     name: "localOptimism",
     color: "#f01a37",
     chainId: 420,
     blockExplorer: "",
-    rpcUrl: "http://" + window.location.hostname + ":8545",
+    rpcUrl: "http://" + window.location.hostname + ":2545",
     gasPrice: 0,
   },
   kovanOptimism: {
