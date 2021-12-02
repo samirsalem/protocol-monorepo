@@ -8,7 +8,7 @@ const deployedTradeableCashflow = require("../deployments/goerli/TradeableCashfl
 const tradeableCashflowAddress = deployedTradeableCashflow.address;
 
 
-//create a flow
+//delete a flow
 async function main() {
     try {
         console.log("TCF address: " + tradeableCashflowAddress);
