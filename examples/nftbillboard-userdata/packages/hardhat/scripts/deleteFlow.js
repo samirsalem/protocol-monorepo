@@ -4,7 +4,6 @@ require("@nomiclabs/hardhat-ganache");
 //using fDAIx on Goerli
 const fDAIx = "0xF2d68898557cCb2Cf4C10c3Ef2B034b2a69DAD00";
 const Web3 = require("web3");
-// const web3 = new Web3("http://127.0.0.1:8545");
 const deployedTradeableCashflow = require("../deployments/goerli/TradeableCashflow.json");
 const tradeableCashflowAddress = deployedTradeableCashflow.address;
 
