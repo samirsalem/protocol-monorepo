@@ -1,7 +1,7 @@
 {
     "name": "tradeable-cashflow",
     "version": "1.0.0",
-    "description": "SuperApp demo - a simple money stream lottery",
+    "description": "SuperApp demo - a tradeable cashflow NFT",
     "main": "scripts/demo.js",
     "scripts": {
         "build": "truffle compile --all",

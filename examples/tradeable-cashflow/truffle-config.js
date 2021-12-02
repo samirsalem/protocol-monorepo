@@ -1,6 +1,6 @@
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 require("dotenv").config();
-const GAS_LIMIT = 8000000;
+const GAS_LIMIT =  8000000;
 
 module.exports = {
     networks: {
@@ -8,6 +8,7 @@ module.exports = {
             host: "127.0.0.1",
             network_id: "*",
             port: process.env.GANACHE_PORT || 8545,
+            gas: GAS_LIMIT
         },
 
         goerli: {
@@ -26,7 +27,12 @@ module.exports = {
     },
     compilers: {
         solc: {
-            version: "0.7.6" // Fetch exact version from solc-bin (default: truffle's version)
+            version: "0.7.6",
+            settings: {
+                optimizer: {
+                    enabled: true
+                }
+            } // Fetch exact version from solc-bin (default: truffle's version)
         }
     }
 };
