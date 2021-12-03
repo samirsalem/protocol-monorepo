@@ -24,7 +24,8 @@ async function main() {
             token: fDAIx
         });
 
-        await carol.flow({recipient: tradeableCashflowAddress, flowRate: "300000", userData: web3.eth.abi.encodeParameter('string', 'Hello world!')})
+        //flowrate is = ~10/mo
+        await carol.flow({recipient: tradeableCashflowAddress, flowRate: "3858024691358", userData: web3.eth.abi.encodeParameter('string', 'Hello world!')})
          
     } catch (error) {
         console.error(error);

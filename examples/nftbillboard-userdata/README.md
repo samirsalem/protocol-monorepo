@@ -16,6 +16,7 @@ Usage
 4) Add one of your Ethereum addresses as the owner within the deployment script ```00_deploy_tradeable_cashflow.js```
 5) Add your own custom message inside of each of the scripts as the value that is encoded and set to the ```userData``` variable
 
+Note: this project will run best on an ethereum testnet. Tests are run in a local hardhat environment.
 
 
 For initial setup and contract deployment:
