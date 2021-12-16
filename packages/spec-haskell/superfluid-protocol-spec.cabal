@@ -1,0 +1,43 @@
+name:                SuperfluidProtocolSpec
+version:             0.1.0.0
+synopsis:            Superfluid protocol specifications written in Haskell
+-- description:
+homepage:            https://www.superfluid.finance/
+license:             MIT
+license-file:        LICENSE
+author:              Miao ZhiCheng
+maintainer:          miao@superfluid.finance
+-- copyright:
+category:            Data
+build-type:          Simple
+extra-source-files:  CHANGELOG.md
+cabal-version:       >=1.10
+
+library
+  exposed-modules:     Superfluid
+  -- other-modules:
+  -- other-extensions:
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+  build-depends:       base >=4.12 && <4.13
+
+Test-Suite test
+  main-is:             Tests.hs
+  other-modules:       SuperfluidTest
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  default-language:    Haskell2010
+  ghc-options:         -Wall
+  build-depends:       base >=4.12 && <4.13,
+                       HUnit,
+                       SuperfluidProtocolSpec
+
+executable superfluid-protocol-spec
+  main-is:             Main.hs
+  -- other-modules:
+  -- other-extensions:
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+  build-depends:       base >=4.12 && <4.13,
+                       time,
+                       SuperfluidProtocolSpec

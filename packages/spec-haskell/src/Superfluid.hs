@@ -40,18 +40,18 @@ instance Show SuperAgreement where
         ++ ", and sub balance is " ++ (show b)
         ++ ", last updated at " ++ (show ut)
 
-{- SuperfluidAccount -}
+{- Account -}
 
-data SuperfluidAccount = SuperfluidAccount {
+data Account = Account {
     address :: String,
     staticBalance :: Integer,
     agreements :: [SuperAgreement]
 }
 
-balanceOf :: SuperfluidAccount -> Timestamp -> RealtimeBalance
-balanceOf (SuperfluidAccount {agreements = agreements, staticBalance = sb, address = a}) t =
+balanceOf :: Account -> Timestamp -> RealtimeBalance
+balanceOf (Account {agreements = agreements, staticBalance = sb, address = a}) t =
     foldl add (RealtimeBalance sb 0 0) (map (\agr -> subBalanceOf agr a t) agreements)
-cfa :: SuperfluidAccount -> SuperAgreement
+cfa :: Account -> SuperAgreement
 cfa sa = head $ cfaOnlyList $ agreements sa
 cfaGet agr = case agr of
     CFA_v1 _ _ _ -> [agr]
@@ -67,21 +67,21 @@ unknownAgreementsList _ = []
 updateFlowRate :: SuperAgreement -> Integer -> Timestamp -> SuperAgreement
 updateFlowRate (CFA_v1 t1 b1 r) d t2 = CFA_v1 t2 (b1 + (toInteger(t2-t1) * r)) (r + d)
 
-updateFlow :: SuperfluidAccount -> SuperfluidAccount -> Integer -> Timestamp -> (SuperfluidAccount, SuperfluidAccount)
+updateFlow :: Account -> Account -> Integer -> Timestamp -> (Account, Account)
 updateFlow a b r t2 = (
-        (SuperfluidAccount {address = (address a), staticBalance = (staticBalance a), agreements = (
+        (Account {address = (address a), staticBalance = (staticBalance a), agreements = (
             [(updateFlowRate (cfa a) (r * (-1)) t2)]
             ++ (unknownAgreementsList (agreements a))
         )}),
-        (SuperfluidAccount {address = (address b), staticBalance = (staticBalance b), agreements = (
+        (Account {address = (address b), staticBalance = (staticBalance b), agreements = (
             [(updateFlowRate (cfa b) r t2)]
             ++ (unknownAgreementsList (agreements b))
         )}))
 
-{- SuperfluidAccountSnapshot -}
+{- AccountSnapshot -}
 
-data SuperfluidAccountSnapshot = SuperfluidAccountSnapshot SuperfluidAccount Timestamp
-instance Show SuperfluidAccountSnapshot where
-    show (SuperfluidAccountSnapshot sa  t) =
+data AccountSnapshot = AccountSnapshot Account Timestamp
+instance Show AccountSnapshot where
+    show (AccountSnapshot sa  t) =
         "Balance of " ++ (address sa) ++ " is "
         ++  (show $ wad2human $ availableBalance $ sa `balanceOf` t)
