@@ -1,10 +1,8 @@
-import Test.HUnit
-
+import Test.Framework
+import Test.Framework.Providers.HUnit
 import qualified SuperfluidTest
 
-tests :: Test
-tests = TestList SuperfluidTest.tests
-
-main :: IO Counts
-main = do
-  runTestTT tests
+main :: IO ()
+main = defaultMainWithOpts
+  SuperfluidTest.tests
+  mempty
