@@ -1,25 +1,29 @@
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
+
 module Superfluid.Agreements.ConstantFlowAgreement
     ( CFAv1AgreementData(..)
     , CFAv1AccountData(..)
     , updateFlow
     ) where
 
-import Superfluid.Types (Timestamp)
-import Superfluid.RealtimeBalance (RealtimeBalance(..))
-import Superfluid.SuperAgreement (SuperAgreementAccountDataClass(..))
+import Superfluid.Core.Types (Liquidity, Timestamp)
+import Superfluid.Core.RealtimeBalance
+    ( liquidityToRTB
+    , integralToLiquidity)
+import Superfluid.Core.SuperAgreement (SuperAgreementAccountDataClass(..))
 
-data CFAv1AgreementData = CFAv1AgreementData
+data CFAv1AgreementData liq = CFAv1AgreementData
     { flowLastUpdatedAt :: Timestamp
-    , flowRate :: Integer
+    , flowRate :: liq
     }
 
-data CFAv1AccountData = CFAv1AccountData
+data CFAv1AccountData liq = CFAv1AccountData
     { settledAt :: Timestamp
-    , settledBalance :: Integer
-    , netFlowRate :: Integer
+    , settledBalance :: liq
+    , netFlowRate :: liq
     }
 
-instance Show CFAv1AccountData where
+instance Liquidity liq =>Show (CFAv1AccountData liq) where
     show CFAv1AccountData
         { netFlowRate = r
         , settledBalance = b_s
@@ -28,17 +32,18 @@ instance Show CFAv1AccountData where
         ++  ", settled balance " ++ (show b_s)
         ++  ", settled at " ++ (show t_s)
 
-instance SuperAgreementAccountDataClass CFAv1AccountData where
+instance Liquidity liq =>
+    SuperAgreementAccountDataClass (CFAv1AccountData liq) liq where
     providedBalanceOf
         CFAv1AccountData
             { netFlowRate = r
             , settledBalance = b_s
             , settledAt = t_s
             }
-        t =
-        RealtimeBalance (toInteger(t - t_s) * r + b_s) 0 0
+        t = liquidityToRTB $ integralToLiquidity(t - t_s) * r + b_s
 
-_updateFlowRate :: CFAv1AccountData -> Integer -> Timestamp -> CFAv1AccountData
+_updateFlowRate :: Liquidity liq =>
+    CFAv1AccountData liq -> liq -> Timestamp -> CFAv1AccountData liq
 _updateFlowRate
     CFAv1AccountData
         { netFlowRate = r
@@ -48,11 +53,17 @@ _updateFlowRate
     r_delta t =
     CFAv1AccountData
         { netFlowRate = r + r_delta
-        , settledBalance = b_s + (toInteger(t - t_s) * r)
+        , settledBalance = b_s + integralToLiquidity(t - t_s) * r
         , settledAt = t
         }
 
-updateFlow :: CFAv1AgreementData -> CFAv1AccountData -> CFAv1AccountData -> Integer -> Timestamp -> (CFAv1AgreementData, CFAv1AccountData, CFAv1AccountData)
+updateFlow :: Liquidity liq =>
+    CFAv1AgreementData liq ->
+    CFAv1AccountData liq ->
+    CFAv1AccountData liq ->
+    liq ->
+    Timestamp ->
+    (CFAv1AgreementData liq, CFAv1AccountData liq, CFAv1AccountData liq)
 updateFlow cfa sender receiver newFlowRate t =
     let flowRateDelta = newFlowRate - (flowRate cfa)
     in

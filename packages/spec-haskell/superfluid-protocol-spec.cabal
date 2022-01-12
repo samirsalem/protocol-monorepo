@@ -15,10 +15,11 @@ cabal-version:        2.0
 
 library
   exposed-modules:      Superfluid
-                        Superfluid.Types
-                        Superfluid.RealtimeBalance
-                        Superfluid.SuperAgreement
-                        Superfluid.Account
+                        Superfluid.Core.Types
+                        Superfluid.Core.RealtimeBalance
+                        Superfluid.Core.SuperAgreement
+                        Superfluid.Core.Account
+                        Superfluid.Agreements.DummyAgreement
                         Superfluid.Agreements.ConstantFlowAgreement
                         Superfluid.Testing.SimpleAccount
   -- other-modules:

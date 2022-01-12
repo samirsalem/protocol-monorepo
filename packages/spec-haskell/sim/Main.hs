@@ -3,7 +3,7 @@ module Main where
 import Control.Monad.State
 import qualified Data.Map as M
 import Data.Time.Clock.POSIX (getPOSIXTime)
-import Superfluid.Types (Timestamp, toWad)
+import Superfluid.Core.Types (Timestamp, toWad)
 import Superfluid.Testing.SimpleAccount
     (Address
     , SimpleAccount

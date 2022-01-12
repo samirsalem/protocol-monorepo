@@ -2,7 +2,7 @@ module SimState where
 
 import qualified Data.Map as M
 import Control.Monad.State
-import Superfluid.Types (Timestamp)
+import Superfluid.Core.Types (Timestamp)
 import Superfluid(Account(..))
 import qualified Superfluid.Agreements.ConstantFlowAgreement as CFAv1
 import qualified Superfluid.Testing.SimpleAccount as SimpleAccount
@@ -14,7 +14,7 @@ import Superfluid.Testing.SimpleAccount
 data SimState = SimState
     { currentTime :: Timestamp
     , accounts :: M.Map Address SimpleAccount
-    , cfaAgreements :: M.Map String CFAv1.CFAv1AgreementData}
+    , cfaAgreements :: M.Map String (CFAv1.CFAv1AgreementData Integer)}
 type SimStateMonad a = StateT SimState IO a
 
 printAccount :: SimpleAccount -> Timestamp -> IO ()
@@ -40,7 +40,7 @@ findAccount s a = case M.lookup a (accounts s) of
         Just value -> value
         Nothing -> error "No such address"
 
-findCFA :: SimState -> Address -> Address -> CFAv1.CFAv1AgreementData
+findCFA :: SimState -> Address -> Address -> CFAv1.CFAv1AgreementData Integer
 findCFA s a b = case M.lookup (a++":"++b) (cfaAgreements s) of
         Just value -> value
         Nothing -> CFAv1.CFAv1AgreementData 0 0

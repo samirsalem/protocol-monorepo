@@ -3,9 +3,9 @@ module Superfluid
     , Account(..)
     ) where
 
-import Superfluid.RealtimeBalance
+import Superfluid.Core.RealtimeBalance
     ( RealtimeBalance(..)
     )
-import Superfluid.Account
+import Superfluid.Core.Account
     ( Account(..)
     )

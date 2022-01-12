@@ -1,10 +1,12 @@
-module Superfluid.Types where
+module Superfluid.Core.Types where
 
 import Text.Printf (printf)
 
 {-
 # Common Types
 -}
+class (Show num, Num num, Ord num) => Liquidity num where
+
 type Timestamp = Int
 
 {-

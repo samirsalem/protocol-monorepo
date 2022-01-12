@@ -1,3 +1,5 @@
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
+
 module Superfluid.Testing.SimpleAccount
     ( Address
     , SimpleAccount(..)
@@ -8,33 +10,31 @@ import Superfluid
     ( RealtimeBalance(..)
     , Account(..)
     )
-import Superfluid.Types (Timestamp)
-import Superfluid.SuperAgreement
-    ( makeSuperAgreementData
-    , DummyAgreementAccountData(..)
-    )
-import Superfluid.Agreements.ConstantFlowAgreement
-    ( CFAv1AccountData(..)
-    )
+import Superfluid.Core.Types (Liquidity, Timestamp)
+import Superfluid.Core.SuperAgreement (makeSuperAgreementData)
+import Superfluid.Agreements.DummyAgreement (DummyAgreementAccountData(..))
+import Superfluid.Agreements.ConstantFlowAgreement (CFAv1AccountData(..))
+
+instance Liquidity Integer where
 
 type Address = String
 
 data SimpleAccount = SimpleAccount
     { address :: Address
     , staticBalance :: Integer
-    , dummy :: DummyAgreementAccountData
-    , cfa :: CFAv1AccountData
+    , dummy :: DummyAgreementAccountData Integer
+    , cfa :: CFAv1AccountData Integer
     , lastUpdatedAt :: Timestamp
     }
 
-instance Account SimpleAccount where
+instance Account SimpleAccount Integer where
     staticBalanceOf a = staticBalance a
     agreementsOf a =
         [ makeSuperAgreementData $ dummy a
         , makeSuperAgreementData $ cfa a
         ]
 
-createSimpleAccount :: String -> RealtimeBalance -> Timestamp -> SimpleAccount
+createSimpleAccount :: String -> RealtimeBalance Integer -> Timestamp -> SimpleAccount
 createSimpleAccount a b t = SimpleAccount
     { address = a
     , staticBalance = 0
@@ -47,7 +47,7 @@ createSimpleAccount a b t = SimpleAccount
         }
     }
 
-sumAllSimpleAccount :: [SimpleAccount] -> Timestamp -> RealtimeBalance
+sumAllSimpleAccount :: [SimpleAccount] -> Timestamp -> RealtimeBalance Integer
 sumAllSimpleAccount alist t = foldr
     (+)
     (RealtimeBalance 0 0 0)
