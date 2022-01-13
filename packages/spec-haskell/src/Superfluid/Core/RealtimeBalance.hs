@@ -32,11 +32,9 @@ instance (Liquidity liq) => Num (RealtimeBalance liq) where
     abs = liquidityToRTB . abs . liquidityFromRTB
     negate = liquidityToRTB . negate . liquidityFromRTB
 
-{- --# LANGUAGE FlexibleInstances #-}
--- type RealtimeBalanceInteger = RealtimeBalance Integer
--- instance Show RealtimeBalanceInteger where
---     show (RealtimeBalance ab d od) =
---         "RTB("
---         ++ show ab ++ ", "
---         ++ show d ++ "/" ++ show od
---         ++ ")"
+instance (Liquidity liq) => Show (RealtimeBalance liq) where
+    show (RealtimeBalance ab d od) =
+        "RTB("
+        ++ show ab ++ ", "
+        ++ show d ++ "/" ++ show od
+        ++ ")"

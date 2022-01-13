@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Superfluid.Core.Account
     ( Account(..)
@@ -7,14 +7,16 @@ module Superfluid.Core.Account
 import Superfluid.Core.Types (Liquidity, Timestamp)
 import Superfluid.Core.RealtimeBalance
     ( RealtimeBalance
-    , liquidityToRTB)
-import Superfluid.Core.SuperAgreement
-    ( SuperAgreementAccountData
-    , providedBalanceOfAgreement)
+    , liquidityToRTB
+    )
+import Superfluid.Core.Agreement
+    ( AnyAgreementAccountData
+    , providedBalanceOfAgreement
+    )
 
 class (Liquidity liq) => Account a liq where
     staticBalanceOf :: a -> liq
-    agreementsOf :: a -> [SuperAgreementAccountData liq]
+    agreementsOf :: a -> [AnyAgreementAccountData liq]
     balanceOf :: a -> Timestamp -> RealtimeBalance liq
     balanceOf a t = foldr
         (+)

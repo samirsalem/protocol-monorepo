@@ -17,7 +17,7 @@ library
   exposed-modules:      Superfluid
                         Superfluid.Core.Types
                         Superfluid.Core.RealtimeBalance
-                        Superfluid.Core.SuperAgreement
+                        Superfluid.Core.Agreement
                         Superfluid.Core.Account
                         Superfluid.Agreements.DummyAgreement
                         Superfluid.Agreements.ConstantFlowAgreement
@@ -38,8 +38,6 @@ Test-Suite test
   ghc-options:          -Wall
   build-depends:        base >=4.12 && <4.13,
                         HUnit,
-                        test-framework,
-                        test-framework-hunit,
                         SuperfluidProtocolSpec
 
 executable superfluid-protocol-sim

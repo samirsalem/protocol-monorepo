@@ -1,54 +1,122 @@
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
 
 module Superfluid.Testing.SimpleAccount
-    ( Address
+    ( WAD
+    , toWad
+    , wad4humanN
+    , wad4human
+    , AccountAddress
+    , createAccountAddress
+    , SimpleRealtimeBalance
+    , SimpleDummyAgreementAccountData
+    , SimpleCFAAgreementData
+    , SimpleCFAAccountData
     , SimpleAccount(..)
     , createSimpleAccount
-    , sumAllSimpleAccount) where
+    , sumAllSimpleAccount
+    ) where
 
 import Superfluid
-    ( RealtimeBalance(..)
-    , Account(..)
+    ( Liquidity
+    , Timestamp
+    , RealtimeBalance(..)
+    , DummyAgreementAccountData(..)
+    , CFAAgreementData
+    , CFAAccountData(..)
     )
-import Superfluid.Core.Types (Liquidity, Timestamp)
-import Superfluid.Core.SuperAgreement (makeSuperAgreementData)
-import Superfluid.Agreements.DummyAgreement (DummyAgreementAccountData(..))
-import Superfluid.Agreements.ConstantFlowAgreement (CFAv1AccountData(..))
+import qualified Superfluid.Core.Account as Account
+    ( Account(..)
+    )
+import Superfluid.Core.Agreement (makeAgreementData)
+import qualified Superfluid.Agreements.ConstantFlowAgreement as CFA
+    ( CFAAccountData(..)
+    )
 
-instance Liquidity Integer where
+import Text.Printf (printf)
 
-type Address = String
+{-
+# Account address type
+-}
+newtype AccountAddress = AccountAddress String
+createAccountAddress :: String -> AccountAddress
+createAccountAddress x = AccountAddress x
+
+instance Eq AccountAddress where
+    (==) (AccountAddress a) (AccountAddress b)= a == b
+instance Ord AccountAddress where
+    compare (AccountAddress a) (AccountAddress b)= compare a b
+instance Show AccountAddress where
+    show (AccountAddress a )= a
+
+{-
+# WAD (18 decimal digit fixed-precision integer) Utilities
+-}
+newtype WAD = WAD Integer
+
+toWad :: (RealFrac a) => a -> WAD
+toWad x = WAD (round $ x * (10 ^ (18::Int)))
+
+wad4humanN :: WAD -> Int -> String
+wad4humanN (WAD wad) n
+    | n >= 0 && n <= 18 = printf
+        ("%0."++(show n)++"f")
+        ((fromIntegral wad / (10 ^ (18::Int))) :: Double)
+    | otherwise = error "Invalid parameter"
+
+wad4human :: WAD -> String
+wad4human wad = wad4humanN wad 4
+
+instance Num WAD where
+    (+) (WAD a) (WAD b)= WAD (a + b)
+    (*) (WAD a) (WAD b)= WAD (a * b)
+    abs (WAD x)= WAD (abs x)
+    signum (WAD x)= WAD (signum x)
+    fromInteger = WAD
+    negate (WAD x) = WAD (negate x)
+instance Eq WAD where
+    (==) (WAD a) (WAD b)= a == b
+instance Ord WAD where
+    compare (WAD a) (WAD b)= compare a b
+instance Show WAD where
+    show = wad4human
+
+instance Liquidity WAD where
+
+type SimpleRealtimeBalance = RealtimeBalance WAD
+type SimpleDummyAgreementAccountData = DummyAgreementAccountData WAD
+type SimpleCFAAgreementData = CFAAgreementData WAD
+type SimpleCFAAccountData = CFAAccountData WAD
 
 data SimpleAccount = SimpleAccount
-    { address :: Address
-    , staticBalance :: Integer
-    , dummy :: DummyAgreementAccountData Integer
-    , cfa :: CFAv1AccountData Integer
+    { address :: AccountAddress
+    , staticBalance :: WAD
+    , dummy :: SimpleDummyAgreementAccountData
+    , cfa :: SimpleCFAAccountData
     , lastUpdatedAt :: Timestamp
     }
 
-instance Account SimpleAccount Integer where
+instance Account.Account SimpleAccount WAD where
     staticBalanceOf a = staticBalance a
     agreementsOf a =
-        [ makeSuperAgreementData $ dummy a
-        , makeSuperAgreementData $ cfa a
+        [ makeAgreementData $ dummy a
+        , makeAgreementData $ cfa a
         ]
 
-createSimpleAccount :: String -> RealtimeBalance Integer -> Timestamp -> SimpleAccount
-createSimpleAccount a b t = SimpleAccount
-    { address = a
+createSimpleAccount :: String -> WAD -> Timestamp -> SimpleAccount
+createSimpleAccount a (WAD wad) t = SimpleAccount
+    { address = createAccountAddress a
     , staticBalance = 0
     , lastUpdatedAt = t
-    , dummy = DummyAgreementAccountData "dummy" b
-    , cfa = CFAv1AccountData
-        { settledAt = t
-        , settledBalance = fromInteger(0)
-        , netFlowRate = 0
+    , dummy = DummyAgreementAccountData "dummy" (fromInteger wad)
+    , cfa = CFAAccountData
+        { CFA.settledAt = t
+        , CFA.settledBalance = fromInteger(0)
+        , CFA.netFlowRate = 0
         }
     }
 
-sumAllSimpleAccount :: [SimpleAccount] -> Timestamp -> RealtimeBalance Integer
+sumAllSimpleAccount :: [SimpleAccount] -> Timestamp -> SimpleRealtimeBalance
 sumAllSimpleAccount alist t = foldr
     (+)
     (RealtimeBalance 0 0 0)
-    (map (flip Superfluid.balanceOf t) alist)
+    (map (flip Account.balanceOf t) alist)

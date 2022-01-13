@@ -4,7 +4,7 @@ module Superfluid.Agreements.DummyAgreement where
 
 import Superfluid.Core.Types (Liquidity)
 import Superfluid.Core.RealtimeBalance (RealtimeBalance)
-import Superfluid.Core.SuperAgreement (SuperAgreementAccountDataClass(..))
+import Superfluid.Core.Agreement (AgreementAccountDataClass(..))
 
 data DummyAgreementAccountData liq = DummyAgreementAccountData
     { label :: String
@@ -12,5 +12,5 @@ data DummyAgreementAccountData liq = DummyAgreementAccountData
     }
 
 instance (Liquidity liq) =>
-    SuperAgreementAccountDataClass (DummyAgreementAccountData liq) liq where
+    AgreementAccountDataClass (DummyAgreementAccountData liq) liq where
     providedBalanceOf a _ = value a
