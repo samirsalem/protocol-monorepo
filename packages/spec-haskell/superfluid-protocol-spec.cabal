@@ -14,13 +14,14 @@ extra-source-files:   CHANGELOG.md
 cabal-version:        2.0
 
 library
-  exposed-modules:      Superfluid
-                        Superfluid.Core.Types
+  exposed-modules:      Superfluid.Core.Types
                         Superfluid.Core.RealtimeBalance
                         Superfluid.Core.Agreement
                         Superfluid.Core.Account
                         Superfluid.Agreements.DummyAgreement
                         Superfluid.Agreements.ConstantFlowAgreement
+                        Superfluid.MonadToken
+                        Superfluid
                         Superfluid.Testing.SimpleAccount
   -- other-modules:
   -- other-extensions:

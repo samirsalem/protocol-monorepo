@@ -5,4 +5,5 @@ module Superfluid.Core.Types where
 -}
 class (Num num, Ord num, Show num) => Liquidity num where
 
+-- FIXME make timestamp a type class
 type Timestamp = Int

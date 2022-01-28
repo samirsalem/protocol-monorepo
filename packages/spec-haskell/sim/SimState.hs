@@ -22,12 +22,6 @@ data SimState = SimState
     , cfaAgreements :: M.Map String SimpleCFAAgreementData}
 type SimStateMonad a = StateT SimState IO a
 
-printAccount :: SimpleAccount -> Timestamp -> IO ()
-printAccount a t = do
-    print $ "Account: " ++ show(SimpleAccount.address a)
-    print $ "  Balance: " ++ show((Account.balanceOf a t) :: SimpleRealtimeBalance)
-    print $ "  CFA Data: " ++ show(SimpleAccount.cfa a)
-
 getCurrentTime :: SimStateMonad Timestamp
 getCurrentTime = do
     s <- get
@@ -73,6 +67,12 @@ updateFlow sender receiver newFlowRate t = do
             cfaAgreement'
             (cfaAgreements vs)
         })
+
+printAccount :: SimpleAccount -> Timestamp -> IO ()
+printAccount a t = do
+    print $ "Account: " ++ show(SimpleAccount.address a)
+    print $ "  Balance: " ++ show((Account.balanceOf a t) :: SimpleRealtimeBalance)
+    print $ "  CFA Data: " ++ show(SimpleAccount.cfa a)
 
 printMainState :: SimStateMonad ()
 printMainState = do

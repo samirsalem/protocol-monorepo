@@ -20,6 +20,7 @@ import Superfluid
     ( Liquidity
     , Timestamp
     , RealtimeBalance(..)
+    , Account
     , DummyAgreementAccountData(..)
     , CFAAgreementData
     , CFAAccountData(..)
@@ -95,7 +96,7 @@ data SimpleAccount = SimpleAccount
     , lastUpdatedAt :: Timestamp
     }
 
-instance Account.Account SimpleAccount WAD where
+instance Account SimpleAccount WAD where
     staticBalanceOf a = staticBalance a
     agreementsOf a =
         [ makeAgreementData $ dummy a
