@@ -1,17 +1,28 @@
-module Superfluid.Core.RealtimeBalance
-    ( RealtimeBalance(..)
+module Superfluid.Concepts.RealtimeBalance
+    ( RealtimeBalance (..)
     , liquidityFromRTB
     , liquidityToRTB
     , integralToLiquidity
     ) where
 
-import Superfluid.Core.Types (Liquidity)
+import           Data.Default
+import           Superfluid.Concepts.Liquidity (Liquidity)
 
+
+{- RealtimeBalance type
+-}
 data RealtimeBalance liq = RealtimeBalance
     { availableBalance :: liq
-    , deposit :: liq
-    , owedDeposit :: liq
+    , deposit          :: liq
+    , owedDeposit      :: liq
     }
+
+instance (Liquidity liq) => Default (RealtimeBalance liq) where
+    def = RealtimeBalance
+        { availableBalance = def
+        , deposit = def
+        , owedDeposit = def
+        }
 
 liquidityFromRTB :: (Liquidity liq) => (RealtimeBalance liq) -> liq
 liquidityFromRTB (RealtimeBalance ab d od) = ab + max 0 (d - od)

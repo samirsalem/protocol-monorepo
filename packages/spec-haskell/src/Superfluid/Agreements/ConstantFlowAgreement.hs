@@ -1,42 +1,49 @@
-{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Superfluid.Agreements.ConstantFlowAgreement
-    ( CFAAgreementData(..)
-    , CFAAccountData(..)
+    ( CFAContractData (..)
+    , CFAAccountData (..)
     , updateFlow
     ) where
 
-import Superfluid.Core.Types
-    ( Liquidity
-    , Timestamp)
-import Superfluid.Core.RealtimeBalance
-    ( liquidityToRTB
-    , integralToLiquidity
-    )
-import Superfluid.Core.Agreement (AgreementAccountDataClass(..))
+import           Data.Default
+import           Superfluid.Concepts.Agreement       (AgreementAccountData (..))
+import           Superfluid.Concepts.Liquidity       (Liquidity)
+import           Superfluid.Concepts.RealtimeBalance (integralToLiquidity,
+                                                      liquidityToRTB)
+import           Superfluid.Concepts.Timestamp       (Timestamp)
 
-data CFAAgreementData liq = CFAAgreementData
+
+data CFAContractData liq = CFAContractData
     { flowLastUpdatedAt :: Timestamp
-    , flowRate :: liq
+    , flowRate          :: liq
     }
 
 data CFAAccountData liq = CFAAccountData
-    { settledAt :: Timestamp
+    { settledAt      :: Timestamp
     , settledBalance :: liq
-    , netFlowRate :: liq
+    , netFlowRate    :: liq
     }
 
-instance Liquidity liq =>Show (CFAAccountData liq) where
+instance (Liquidity liq) => Default (CFAAccountData liq) where
+    def = CFAAccountData
+        { settledAt = def
+        , settledBalance = def
+        , netFlowRate = def
+        }
+
+instance Liquidity liq => Show (CFAAccountData liq) where
     show CFAAccountData
         { netFlowRate = r
         , settledBalance = b_s
         , settledAt = t_s
-        } = " net flowrate " ++ (show r)
+        } = "net flowrate " ++ (show r)
         ++  ", settled balance " ++ (show b_s)
         ++  ", settled at " ++ (show t_s)
 
-instance Liquidity liq =>
-    AgreementAccountDataClass (CFAAccountData liq) liq where
+instance Liquidity liq
+    => AgreementAccountData (CFAAccountData liq) liq where
     providedBalanceOf
         CFAAccountData
             { netFlowRate = r
@@ -61,16 +68,16 @@ _updateFlowRate
         }
 
 updateFlow :: Liquidity liq =>
-    CFAAgreementData liq ->
+    CFAContractData liq ->
     CFAAccountData liq ->
     CFAAccountData liq ->
     liq ->
     Timestamp ->
-    (CFAAgreementData liq, CFAAccountData liq, CFAAccountData liq)
+    (CFAContractData liq, CFAAccountData liq, CFAAccountData liq)
 updateFlow cfa sender receiver newFlowRate t =
     let flowRateDelta = newFlowRate - (flowRate cfa)
     in
-    ( CFAAgreementData
+    ( CFAContractData
         { flowLastUpdatedAt = t
         , flowRate = newFlowRate
         }

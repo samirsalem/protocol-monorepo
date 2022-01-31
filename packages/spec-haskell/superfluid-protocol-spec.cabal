@@ -1,6 +1,7 @@
-name:                 SuperfluidProtocolSpec
-version:              0.1.0.0
-synopsis:             Superfluid protocol specifications written in Haskell
+cabal-version:        3.0
+name:                 superfluid-protocol-spec
+version:              0.0.1.0
+synopsis:             Superfluid protocol specifications in Haskell
 -- description:
 homepage:             https://www.superfluid.finance/
 license:              MIT
@@ -11,24 +12,46 @@ maintainer:           miao@superfluid.finance
 category:             Data
 build-type:           Simple
 extra-source-files:   CHANGELOG.md
-cabal-version:        2.0
 
-library
-  exposed-modules:      Superfluid.Core.Types
-                        Superfluid.Core.RealtimeBalance
-                        Superfluid.Core.Agreement
-                        Superfluid.Core.Account
-                        Superfluid.Agreements.DummyAgreement
+library core
+  exposed-modules:      Superfluid.Concepts.Liquidity
+                        Superfluid.Concepts.Timestamp
+                        Superfluid.Concepts.RealtimeBalance
+                        Superfluid.Concepts.Agreement
+                        Superfluid.Concepts.Account
+                        Superfluid.Agreements.TransferrableBalanceAgreement
                         Superfluid.Agreements.ConstantFlowAgreement
-                        Superfluid.MonadToken
+                        Superfluid.System.SuperfluidAccount
+                        Superfluid.System.SuperfluidToken
                         Superfluid
-                        Superfluid.Testing.SimpleAccount
   -- other-modules:
   -- other-extensions:
   hs-source-dirs:       src
   default-language:     Haskell2010
   ghc-options:          -Wall
-  build-depends:        base >=4.12 && <4.13
+  build-depends:        base >=4.12 && <4.13,
+                        data-default,
+                        containers,
+                        mtl
+
+library simple
+  visibility:           public
+  exposed-modules:      Superfluid.Instances.Simple.Wad
+                        Superfluid.Instances.Simple.Types
+                        Superfluid.Instances.Simple.Address
+                        Superfluid.Instances.Simple.Account
+                        Superfluid.Instances.Simple.Token
+                        Superfluid.Instances.Simple
+  -- other-modules:
+  -- other-extensions:
+  hs-source-dirs:       simple
+  default-language:     Haskell2010
+  ghc-options:          -Wall
+  build-depends:        base >=4.12 && <4.13,
+                        data-default,
+                        containers,
+                        mtl,
+                        superfluid-protocol-spec:core
 
 Test-Suite test
   main-is:              Tests.hs
@@ -39,17 +62,20 @@ Test-Suite test
   ghc-options:          -Wall
   build-depends:        base >=4.12 && <4.13,
                         HUnit,
-                        SuperfluidProtocolSpec
+                        mtl,
+                        data-default,
+                        superfluid-protocol-spec:{core, simple}
 
-executable superfluid-protocol-sim
-  main-is:              Main.hs
-  other-modules:        SimState
+executable superfluid-protocol-validator
+  main-is:              Superfluid/Validator/Main.hs
+  other-modules:        Superfluid.Validator.SimState
   -- other-extensions:
-  hs-source-dirs:       sim
+  hs-source-dirs:       validator
   default-language:     Haskell2010
   ghc-options:          -Wall
   build-depends:        base >=4.12 && <4.13,
-                        SuperfluidProtocolSpec,
+                        data-default,
                         time,
                         containers,
-                        mtl
+                        mtl,
+                        superfluid-protocol-spec:{core, simple}
