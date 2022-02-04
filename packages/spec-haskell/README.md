@@ -62,7 +62,7 @@ Depends on: _Timestamp_, _Liquidity_, _RealtimeBalance_, _Agreement_
 These are instances of the _Agreement_ concept:
 
 * **TransferableBalanceAgreement**: the payment modality as we are all familiar with, i.e. instant settlement between two parties.
-* **ConstantFlowAgreement**: streaming payments between two parties in constant flow rate.
+* **ConstantFlowAgreement**: a streaming payment modality between two parties in constant flow rate.
 * **GeneralDistributionAgreement**: a pubsub-like payment modality allowing publisher pay its subscribers in predefined proportions instantly or in streams.
 
 ## System Modules
