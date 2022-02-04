@@ -25,9 +25,11 @@ $ make dev
 
 # Core Library
 
-These are the core Superfluid protocol concept expressed in type classes.
+The core library exposes the _Concepts_, _Agreements_ and _System_ modules.
 
 ## Concepts Modules
+
+These are the core Superfluid protocol concept expressed in type classes.
 
 **Timestamp**
 
