@@ -1,4 +1,4 @@
-The formal specification of the Superfluid protocol is written in Haskell, namely in Haskell 98, plus some GHC extensions notably Multi-parameter type class, GADTs, and type families.
+The formal specification of the Superfluid protocol is written in Haskell, namely in Haskell 2010, plus some GHC extensions notably Multi-parameter type class, GADTs, and type families.
 
 This package is managed using [cabal](https://www.haskell.org/cabal/) as the `superfluid-protocol-spec` haskell package, which exports:
 

@@ -1,4 +1,3 @@
-
 module Superfluid
     ( Liquidity
     , Timestamp

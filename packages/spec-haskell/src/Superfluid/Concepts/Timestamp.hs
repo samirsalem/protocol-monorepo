@@ -1,5 +1,4 @@
 module Superfluid.Concepts.Timestamp where
 
 
--- FIXME make timestamp a type class
-type Timestamp = Int
+class (Num ts, Ord ts, Show ts) => Timestamp ts
