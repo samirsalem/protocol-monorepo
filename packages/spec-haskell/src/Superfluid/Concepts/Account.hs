@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances      #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses  #-}
 
@@ -7,25 +8,23 @@ module Superfluid.Concepts.Account
 
 import           Superfluid.Concepts.Agreement       (AnyAgreementAccountData, providedBalanceOfAnyAgreement)
 import           Superfluid.Concepts.Liquidity       (Liquidity)
-import           Superfluid.Concepts.RealtimeBalance (RealtimeBalance,
-                                                      liquidityToRTB)
+import           Superfluid.Concepts.RealtimeBalance (RealtimeBalance, liquidityToRTB)
 import           Superfluid.Concepts.Timestamp       (Timestamp)
 
 
-{- # Account type class
+-- Account type class
+--
+-- Naming conventions:
+--   * Type name: acc
+--   * Type family name: ACC
+--   * Term name: *Account
+class (Liquidity lq, Timestamp ts)
+    => Account acc lq ts | acc -> lq, acc -> ts where
 
-## Type parameters:
+    agreementsOf :: acc -> [AnyAgreementAccountData lq ts]
 
-* @a@ - account type
-* @liq@ - liquidity type, instance of Liquidity
--}
-class (Liquidity liq) => Account a liq
-    | a -> liq where
-
-    agreementsOf :: a -> [AnyAgreementAccountData liq]
-
-    balanceOf :: a -> Timestamp -> RealtimeBalance liq
-    balanceOf a t = foldr
+    balanceOf :: acc -> ts -> RealtimeBalance lq
+    balanceOf holderAccount t = foldr
         (+)
         (liquidityToRTB . fromInteger $ 0)
-        (map (flip providedBalanceOfAnyAgreement t) (agreementsOf a))
+        (map (flip providedBalanceOfAnyAgreement t) (agreementsOf holderAccount))

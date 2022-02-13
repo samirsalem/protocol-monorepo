@@ -12,6 +12,6 @@ clean:
 	$(CABAL) v2-clean
 
 dev:
-	npx nodemon -e hs,cabal -i dist-newstyle -x 'make build test || exit 1'
+	npx nodemon -e hs,cabal -i dist -i dist-newstyle -x 'make build test || exit 1'
 
 .PHONY: build clean test dev

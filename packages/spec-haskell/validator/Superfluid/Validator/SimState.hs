@@ -8,32 +8,32 @@ module Superfluid.Validator.SimState
     , printAccount
     , printAccountByAlias
     , printSimState
-    , execTokenState
+    , execTokenStateOp
     ) where
 
 import           Control.Monad.State
 import           Data.Default
 
-import           Superfluid                          (Timestamp)
+import qualified Superfluid.System           as SF
 
-import qualified Superfluid.System.SuperfluidAccount as SuperfluidAccount
-import qualified Superfluid.System.SuperfluidToken   as SuperfluidToken
-
-import           Superfluid.Instances.Simple         (SimpleAccount,
-                                                      SimpleAddress,
-                                                      SimpleRealtimeBalance,
-                                                      SimpleToken,
-                                                      SimpleTokenState,
-                                                      createSimpleAddress,
-                                                      createSimpleToken,
-                                                      listAccounts,
-                                                      sumAllSimpleAccount)
+import           Superfluid.Instances.Simple
+    ( SimpleAccount
+    , SimpleAddress
+    , SimpleRealtimeBalance
+    , SimpleTimestamp
+    , SimpleTokenData
+    , SimpleTokenState
+    , createSimpleAddress
+    , createSimpleToken
+    , listAccounts
+    , sumAllSimpleAccount
+    )
 
 
 
 data SimState = SimState
-    { currentTime  :: Timestamp
-    , defaultToken :: SimpleToken
+    { currentTime  :: SimpleTimestamp
+    , defaultToken :: SimpleTokenData
     }
 
 type SimStateMonad = StateT SimState IO
@@ -41,33 +41,33 @@ type SimStateMonad = StateT SimState IO
 instance Default SimState
     where def = SimState { currentTime = def, defaultToken = undefined }
 
-initSimState :: Timestamp -> [(SimpleAddress, SimpleAccount)] -> SimStateMonad ()
+initSimState :: SimpleTimestamp -> [(SimpleAddress, SimpleAccount)] -> SimStateMonad ()
 initSimState t alist = modify (\_ -> SimState
         { currentTime = t
         , defaultToken = createSimpleToken alist
         })
 
-getCurrentTime :: SimStateMonad Timestamp
+getCurrentTime :: SimStateMonad SimpleTimestamp
 getCurrentTime = do
     s <- get
     return (currentTime s)
 
-timeTravel :: Int -> SimStateMonad Timestamp
+timeTravel :: Integer -> SimStateMonad SimpleTimestamp
 timeTravel d = do
     s <- get
-    let t' = d + (currentTime s)
+    let t' = fromInteger $ d + toInteger (currentTime s)
     modify (\vs -> vs { currentTime = t' })
     return t'
 
 getAccountByAlias :: String -> SimStateMonad SimpleAccount
 getAccountByAlias alias = get >>= \s ->
-    return $ evalState (SuperfluidToken.getAccount addr) (defaultToken s)
+    return $ evalState (SF.getAccount addr) (defaultToken s)
     where addr = createSimpleAddress alias
 
 printAccount :: SimpleAccount -> SimStateMonad ()
 printAccount acc = do
     s <- get
-    liftIO $ putStrLn $ SuperfluidAccount.showAt acc (currentTime s)
+    liftIO $ putStrLn $ SF.showAt acc (currentTime s)
 
 printAccountByAlias :: String -> SimStateMonad ()
 printAccountByAlias alias = getAccountByAlias alias >>= printAccount
@@ -91,7 +91,7 @@ printSimState = do
     liftIO $ putStrLn $ "Total Balance: " ++ (show totalLiquidtySum)
     liftIO $ putStrLn (banner ++ "\n")
 
-execTokenState :: (SimpleTokenState ()) -> SimStateMonad ()
-execTokenState op = modify (\s -> s {
+execTokenStateOp :: (SimpleTokenState ()) -> SimStateMonad ()
+execTokenStateOp op = modify (\s -> s {
         defaultToken = execState op (defaultToken s)
     })

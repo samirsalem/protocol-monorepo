@@ -1,12 +1,10 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE InstanceSigs          #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
--- {-# LANGUAGE FlexibleContexts      #-}
--- {-# LANGUAGE TypeSynonymInstances  #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 module Superfluid.Instances.Simple.Token
-    ( SimpleToken (..)
-    , SimpleTokenUpdate
+    ( SimpleTokenData
     , SimpleTokenState
     , createSimpleToken
     , addAccount
@@ -17,36 +15,42 @@ import           Control.Monad.State
 import           Data.Default
 import qualified Data.Map                                    as M
 
-import           Superfluid                                  (Timestamp)
+import           Superfluid                                  (SuperfluidToken)
 import qualified Superfluid.Agreements.ConstantFlowAgreement as CFA
+import qualified Superfluid.System                           as SF
+
 import           Superfluid.Instances.Simple.Account         (SimpleAccount)
 import qualified Superfluid.Instances.Simple.Account         as SimpleAccount
-import           Superfluid.Instances.Simple.Address         (SimpleAddress)
-import           Superfluid.Instances.Simple.Types           (SimpleCFAContractData)
-import           Superfluid.Instances.Simple.Wad             (Wad)
-import           Superfluid.System.SuperfluidToken
+import           Superfluid.Instances.Simple.BaseTypes
+    ( SimpleAddress
+    , SimpleCFAContractData
+    , SimpleTimestamp
+    , Wad
+    )
 
 
-data SimpleToken = SimpleToken
+data SimpleTokenData = SimpleTokenData
     { accounts      :: M.Map SimpleAddress SimpleAccount
     , cfaAgreements :: M.Map String SimpleCFAContractData
     }
 
-instance Default SimpleToken
-    where def = SimpleToken { accounts = def, cfaAgreements = def }
+instance Default SimpleTokenData
+    where def = SimpleTokenData { accounts = def, cfaAgreements = def }
 
-createSimpleToken :: [(SimpleAddress, SimpleAccount)] -> SimpleToken
-createSimpleToken alist = SimpleToken
+createSimpleToken :: [(SimpleAddress, SimpleAccount)] -> SimpleTokenData
+createSimpleToken alist = SimpleTokenData
     { accounts = M.fromList alist
     , cfaAgreements = M.fromList []
     }
 
-type SimpleTokenUpdate = SuperfluidTokenUpdate Wad SimpleAddress
+type SimpleTokenState = State SimpleTokenData
 
-type SimpleTokenState = State SimpleToken
+instance SuperfluidToken SimpleTokenState where
 
-instance SuperfluidToken SimpleTokenState Wad SimpleAddress SimpleAccount
-    where
+    type LQ SimpleTokenState = Wad
+    type TS SimpleTokenState = SimpleTimestamp
+    type ADDR SimpleTokenState = SimpleAddress
+    type ACC SimpleTokenState = SimpleAccount
 
     getAccount :: SimpleAddress -> SimpleTokenState SimpleAccount
     getAccount a = get >>= \s -> return $
@@ -60,19 +64,19 @@ instance SuperfluidToken SimpleTokenState Wad SimpleAddress SimpleAccount
             Just value -> value
             Nothing    -> CFA.CFAContractData 0 0
 
-    updateFlow :: SimpleAddress -> SimpleAddress -> Wad -> Timestamp -> SimpleTokenState ()
+    updateFlow :: SimpleAddress -> SimpleAddress -> Wad -> SimpleTimestamp -> SimpleTokenState ()
     updateFlow sender receiver newFlowRate t = do
-        updates <- _updateFlow sender receiver newFlowRate t
+        updates <- SF.updateFlowPure sender receiver newFlowRate t
         mapM_ (\u -> case u of
-            UpdateFlow flow' -> do
+            SF.UpdateFlow flow' -> do
                 modify (\vs -> vs {
                     cfaAgreements = M.insert
                         (show(sender)++":"++show(receiver))
                         flow'
                         (cfaAgreements vs)
                 })
-            UpdateAccountFlow (accountAddr, accountFlow') -> do
-                account <- getAccount accountAddr
+            SF.UpdateAccountFlow (accountAddr, accountFlow') -> do
+                account <- SF.getAccount accountAddr
                 modify (\vs -> vs {
                     accounts = M.insert
                         accountAddr

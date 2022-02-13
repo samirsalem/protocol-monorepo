@@ -4,6 +4,8 @@ module Superfluid.Instances.Simple
     , toWad
     , wad4humanN
     , wad4human
+    -- SimpleTimestamp
+    , SimpleTimestamp
     -- Wad-based Simple Types
     , SimpleRealtimeBalance
     , SimpleTBAAccountData
@@ -16,15 +18,12 @@ module Superfluid.Instances.Simple
     , SimpleAccount
     , createSimpleAccount
     , sumAllSimpleAccount
-    , SimpleToken
+    , SimpleTokenData
     , SimpleTokenState
-    , SimpleTokenUpdate
     , createSimpleToken
     , listAccounts
     ) where
 
 import           Superfluid.Instances.Simple.Account
-import           Superfluid.Instances.Simple.Address
+import           Superfluid.Instances.Simple.BaseTypes
 import           Superfluid.Instances.Simple.Token
-import           Superfluid.Instances.Simple.Types
-import           Superfluid.Instances.Simple.Wad

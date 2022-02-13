@@ -2,25 +2,27 @@
 
 import           Control.Monad.State
 import           Data.Default
-import           Data.Time.Clock.POSIX             (getPOSIXTime)
+import           Data.Time.Clock.POSIX         (getPOSIXTime)
 
-import           Superfluid                        (Timestamp)
+import qualified Superfluid.System             as SF
 
-import qualified Superfluid.System.SuperfluidToken as SuperfluidToken
-
-import           Superfluid.Instances.Simple       (SimpleAccount,
-                                                    createSimpleAccount,
-                                                    createSimpleAddress, toWad)
+import           Superfluid.Instances.Simple
+    ( SimpleAccount
+    , SimpleTimestamp
+    , createSimpleAccount
+    , createSimpleAddress
+    , toWad
+    )
 
 import           Superfluid.Validator.SimState
 
 
-now :: IO Int
+now :: IO SimpleTimestamp
 now =  do
     t <- getPOSIXTime
-    return $ fromIntegral ((round t) :: Int)
+    return $ fromIntegral ((round t) :: Integer)
 
-createTestAccount :: String -> Timestamp -> SimpleAccount
+createTestAccount :: String -> SimpleTimestamp -> SimpleAccount
 createTestAccount a t = createSimpleAccount a b t
     where b = toWad (100.0 :: Double)
 
@@ -38,8 +40,8 @@ mainLoop = do
     printSimState
 
     liftIO $ putStrLn $ "# t1.b: create flows " ++ (show (t1 - t0))
-    execTokenState $ SuperfluidToken.updateFlow alice bob (toWad (0.0001::Double)) t1
-    execTokenState $ SuperfluidToken.updateFlow alice carol (toWad (0.0002::Double)) t1
+    execTokenStateOp $ SF.updateFlow alice bob (toWad (0.0001::Double)) t1
+    execTokenStateOp $ SF.updateFlow alice carol (toWad (0.0002::Double)) t1
     printSimState
 
     t2 <- timeTravel $ (3600 * 24)

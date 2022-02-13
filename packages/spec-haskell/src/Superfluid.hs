@@ -8,18 +8,18 @@ module Superfluid
     , TBA.TBAAccountData
     , CFA.CFAContractData
     , CFA.CFAAccountData
-    , SuperfluidAccount.SuperfluidAccount
-    , SuperfluidToken.SuperfluidToken
+    , System.SuperfluidAddress
+    , System.SuperfluidAccount
+    , System.SuperfluidToken
     ) where
 
-import qualified Superfluid.Concepts.Account                         as Account
-import qualified Superfluid.Concepts.Agreement                       as Agreement
+import qualified Superfluid.Concepts.Account                        as Account
+import qualified Superfluid.Concepts.Agreement                      as Agreement
 import           Superfluid.Concepts.Liquidity
-import qualified Superfluid.Concepts.RealtimeBalance                 as RealtimeBalance
+import qualified Superfluid.Concepts.RealtimeBalance                as RealtimeBalance
 import           Superfluid.Concepts.Timestamp
 
-import qualified Superfluid.Agreements.ConstantFlowAgreement         as CFA
-import qualified Superfluid.Agreements.TransferrableBalanceAgreement as TBA
+import qualified Superfluid.Agreements.ConstantFlowAgreement        as CFA
+import qualified Superfluid.Agreements.TransferableBalanceAgreement as TBA
 
-import qualified Superfluid.System.SuperfluidAccount                 as SuperfluidAccount
-import qualified Superfluid.System.SuperfluidToken                   as SuperfluidToken
+import qualified Superfluid.System                                  as System
