@@ -11,7 +11,7 @@ module Superfluid.Instances.Simple.Token
     , listAccounts)
     where
 
-import           Control.Monad.State
+import           Control.Monad.Trans.State
 import           Data.Default
 import qualified Data.Map                                    as M
 

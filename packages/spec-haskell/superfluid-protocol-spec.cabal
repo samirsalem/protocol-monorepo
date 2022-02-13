@@ -30,7 +30,7 @@ library core
         base >=4.12 && <4.13,
         data-default,
         containers,
-        mtl
+        transformers
 
 library simple
     exposed-modules:
@@ -47,7 +47,7 @@ library simple
         base >=4.12 && <4.13,
         data-default,
         containers,
-        mtl,
+        transformers,
         core
 
 executable superfluid-protocol-validator
@@ -61,7 +61,7 @@ executable superfluid-protocol-validator
         data-default,
         time,
         containers,
-        mtl,
+        transformers,
         core,
         simple
 
@@ -75,7 +75,7 @@ test-suite test
     build-depends:
         base >=4.12 && <4.13,
         HUnit,
-        mtl,
+        transformers,
         data-default,
         core,
         simple

@@ -1,6 +1,7 @@
 module SuperfluidTest where
 
-import           Control.Monad.State
+import           Control.Monad.IO.Class
+import           Control.Monad.Trans.State
 import           Data.Default
 import           Test.HUnit
 
