@@ -22,7 +22,7 @@ class (Liquidity lq, Timestamp ts, Address addr)
 
     address :: acc -> addr
 
-    -- ?? return type polymorphism??
+    -- TODO return type polymorphism
     -- getAgreement :: (AgreementAccountData aad lq ts) => acc -> aad
 
     agreementsOf :: acc -> [AnyAgreementAccountData lq ts]

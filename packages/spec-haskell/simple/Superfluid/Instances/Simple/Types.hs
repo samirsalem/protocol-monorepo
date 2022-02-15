@@ -87,7 +87,7 @@ newtype SimpleAddress = SimpleAddress String deriving (Eq, Ord, Address)
 
 -- SimpleAddress public constructor
 createSimpleAddress :: String -> SimpleAddress
-createSimpleAddress = SimpleAddress
+createSimpleAddress = SimpleAddress -- TODO some simple address rules
 
 instance Show SimpleAddress where
     show (SimpleAddress a) = a
@@ -110,9 +110,9 @@ data SimpleAccount = SimpleAccount
     }
 
 -- SimpleAccount public constructor
-createSimpleAccount :: String -> Wad -> SimpleTimestamp -> SimpleAccount
+createSimpleAccount :: SimpleAddress -> Wad -> SimpleTimestamp -> SimpleAccount
 createSimpleAccount toAddress initBalance t = SimpleAccount
-    { address = createSimpleAddress toAddress
+    { address = toAddress
     , lastUpdatedAt = t
     , tba = (def :: SimpleTBAAccountData){ TBA.liquidity = initBalance }
     , cfa = def
@@ -132,7 +132,7 @@ instance SuperfluidAccount SimpleAccount Wad SimpleTimestamp SimpleAddress where
         "\n  Balance: " ++ show((Account.balanceOf a t) :: SimpleRealtimeBalance) ++
         "\n  TBA Data: " ++ show(tba a) ++
         "\n  CFA Data: " ++ show(cfa a) ++
-        "\n  last Updated" ++ show(lastUpdatedAt a)
+        "\n  last Updated: " ++ show(lastUpdatedAt a)
 
     getTBAAccountData :: SimpleAccount -> SimpleTBAAccountData
     getTBAAccountData = tba

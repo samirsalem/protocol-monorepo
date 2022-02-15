@@ -1,51 +1,7 @@
 -- module Superfluid.Validator.Main where
 
-import           Control.Monad.IO.Class
-import           Data.Time.Clock.POSIX             (getPOSIXTime)
-
-import qualified Superfluid.System                 as SF
-
-import           Superfluid.Instances.Simple.Types
-    ( SimpleAccount
-    , SimpleTimestamp
-    , createSimpleAccount
-    , createSimpleAddress
-    , toWad
-    )
-
-import           Superfluid.Validator.SimState
-
-
-now :: IO SimpleTimestamp
-now =  do
-    t <- getPOSIXTime
-    return $ fromIntegral ((round t) :: Integer)
-
-createTestAccount :: String -> SimpleTimestamp -> SimpleAccount
-createTestAccount a t = createSimpleAccount a b t
-    where b = toWad (100.0 :: Double)
-
-mainLoop :: SimMonad ()
-mainLoop = do
-    t0 <- liftIO $ now
-
-    let t1 = t0
-    let alice = createSimpleAddress "alice"
-    let bob = createSimpleAddress "bob"
-    let carol = createSimpleAddress "carol"
-
-    liftIO $ putStrLn $ "# t1.a: create test accounts " ++ (show (t1 - t0))
-    initSimState t1 (map (\a -> (a, createTestAccount (show a) t1)) [alice, bob, carol])
-    printSimState
-
-    liftIO $ putStrLn $ "# t1.b: create flows " ++ (show (t1 - t0))
-    SF.updateFlow alice bob (toWad (0.0001::Double)) t1
-    SF.updateFlow alice carol (toWad (0.0002::Double)) t1
-    printSimState
-
-    t2 <- timeTravel $ 3600 * 24
-    liftIO $ putStrLn $ "# t2: advanced one full day " ++ (show (t2 - t0))
-    printSimState
+import           Superfluid.Validator.Demo
+import           Superfluid.Validator.SimState (runSimMonad)
 
 main :: IO ()
-main = runSimMonad mainLoop
+main = runSimMonad demo

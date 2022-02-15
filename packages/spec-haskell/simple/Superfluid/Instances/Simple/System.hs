@@ -29,6 +29,8 @@ import           Superfluid.Instances.Simple.Types
     , SimpleCFAContractData
     , SimpleTimestamp
     , Wad
+    , createSimpleAccount
+    , toWad
     )
 
 
@@ -94,7 +96,7 @@ instance (Monad m) => SF.SuperfluidToken (SimpleTokenStateT m) where
     getAccount a = getCurrentSimpleToken >>= \s -> return $
         case M.lookup a (accounts s) of
             Just value -> value
-            Nothing    -> error "No such address"
+            Nothing    -> createSimpleAccount a (toWad (0 :: Double)) 0
 
     getFlow :: SimpleAddress -> SimpleAddress -> SimpleTokenStateT m SimpleCFAContractData
     getFlow a b = getCurrentSimpleToken >>= \s -> return $

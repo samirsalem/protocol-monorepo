@@ -48,7 +48,7 @@ data SuperfluidStorageInstruction lq ts addr where
 --   * Type name: tk
 --   * Term name: *TK
 --
--- NOTE:
+-- Notes:
 --
 -- * Superfluid token should be a monad, where it provides:
 --   * addressable account data,

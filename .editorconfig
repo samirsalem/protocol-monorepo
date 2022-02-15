@@ -33,5 +33,9 @@ insert_final_newline = true
 [*.cabal]
 indent_size = 2
 
+[Makefile]
+indent_style = tab
+indent_size = 4
+
 [.github/workflows/*.yml]
 indent_size = 2
