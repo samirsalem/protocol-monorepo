@@ -23,7 +23,7 @@ import           Superfluid.Concepts.RealtimeBalance                (RealtimeBal
 
 -- ============================================================================
 -- | SuperfluidAccount
--- ============================================================================
+--
 class (Liquidity lq, Timestamp ts, Address addr, Account acc lq ts addr)
     => SuperfluidAccount acc lq ts addr where
     showAt :: acc -> ts -> String
@@ -34,8 +34,7 @@ class (Liquidity lq, Timestamp ts, Address addr, Account acc lq ts addr)
 
 -- ============================================================================
 -- | SuperfluidStorageInstruction Sum Type
--- ============================================================================
-
+--
 data SuperfluidStorageInstruction lq ts addr where
     UpdateFlow :: (Liquidity lq, Timestamp ts)
         => CFA.CFAContractData lq ts -> SuperfluidStorageInstruction lq ts addr
@@ -58,8 +57,6 @@ data SuperfluidStorageInstruction lq ts addr where
 -- * To implement agreement write operations, one should use the '*Pure' helper functions which returns storage
 --   instructions for you to commit the changSimpleTimestampes.
 --
--- ============================================================================
-
 class (Monad tk
       , Liquidity (LQ tk)
       , Timestamp (TS tk)

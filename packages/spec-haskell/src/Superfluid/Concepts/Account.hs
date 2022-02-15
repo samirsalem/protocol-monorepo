@@ -11,7 +11,7 @@ import           Superfluid.Concepts.Agreement       (AnyAgreementAccountData, p
 import           Superfluid.Concepts.RealtimeBalance (RealtimeBalance, liquidityToRTB)
 
 
--- Account type class
+-- | Account type class
 --
 -- Naming conventions:
 --   * Type name: acc

@@ -13,14 +13,14 @@ import           Superfluid.BaseTypes                (Liquidity, Timestamp)
 import           Superfluid.Concepts.RealtimeBalance (RealtimeBalance (..))
 
 
--- AgreementContractData type class
+-- | AgreementContractData type class
 --
 -- Naming conventions:
 --  * Type name: acd
 --  * Term name: *ACD
 class (Liquidity lq, Timestamp ts, Default acd, Show acd) => AgreementContractData acd lq ts where
 
--- AgreementAccountData type class
+-- | AgreementAccountData type class
 --
 -- Naming conventions:
 --  - Type name: aad
@@ -28,7 +28,7 @@ class (Liquidity lq, Timestamp ts, Default acd, Show acd) => AgreementContractDa
 class (Liquidity lq, Timestamp ts, Default aad, Show aad) => AgreementAccountData aad lq ts where
     providedBalanceOf :: aad -> ts -> RealtimeBalance lq
 
--- AnyAgreementAccountData type
+-- | AnyAgreementAccountData type
 --
 -- Naming conventions:
 --  - Type name: aad
@@ -45,7 +45,6 @@ data AnyAgreementAccountData lq ts where
         => aad -> AnyAgreementAccountData lq ts
 
 -- | providedBalanceOf wrapper for AnyAgreementAccountData
---
 providedBalanceOfAnyAgreement
     :: (Liquidity lq, Timestamp ts)
     => AnyAgreementAccountData lq ts -> ts -> RealtimeBalance lq

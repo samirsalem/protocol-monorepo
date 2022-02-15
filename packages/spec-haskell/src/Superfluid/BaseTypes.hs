@@ -16,7 +16,6 @@ class (Default lq, Num lq, Ord lq, Show lq) => Liquidity lq
 --  * Type family name: TS
 class (Default ts, Integral ts, Ord ts, Show ts) => Timestamp ts
 
-
 -- | Address Type Class
 --
 -- Naming conventions:

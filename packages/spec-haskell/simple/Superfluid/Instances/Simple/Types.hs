@@ -44,8 +44,7 @@ import           Superfluid.System                                  (SuperfluidA
 -- Wad type:
 --   * 18 decimal digit fixed-precision integer
 --   * an instance of Liquidity
--- ============================================================================
-
+--
 newtype Wad = Wad Integer deriving (Eq, Ord, Num, Default)
 
 toWad :: (RealFrac a) => a -> Wad
@@ -68,8 +67,7 @@ instance Liquidity Wad where
 
 -- ============================================================================
 -- SimpleTimestamp Base Type
--- ============================================================================
-
+--
 newtype SimpleTimestamp = SimpleTimestamp Integer deriving (Enum, Eq, Ord, Num, Real, Integral, Default)
 
 instance Timestamp SimpleTimestamp
@@ -77,42 +75,47 @@ instance Timestamp SimpleTimestamp
 instance Show SimpleTimestamp where
     show (SimpleTimestamp t) = show t
 
-
 -- ============================================================================
 -- SimpleRealtimeBalance Base Type
--- ============================================================================
-
+--
 type SimpleRealtimeBalance = RealtimeBalance Wad
 
 -- ============================================================================
 -- SimpleAddress Base Type
--- ============================================================================
-
+--
 newtype SimpleAddress = SimpleAddress String deriving (Eq, Ord, Address)
+
+-- SimpleAddress public constructor
+createSimpleAddress :: String -> SimpleAddress
+createSimpleAddress = SimpleAddress
 
 instance Show SimpleAddress where
     show (SimpleAddress a) = a
 
-createSimpleAddress :: String -> SimpleAddress
-createSimpleAddress = SimpleAddress
-
 -- ============================================================================
 -- Simple Types for Agreements
--- ============================================================================
-
+--
 type SimpleTBAAccountData = TBAAccountData Wad SimpleTimestamp
 type SimpleCFAContractData = CFAContractData Wad SimpleTimestamp
 type SimpleCFAAccountData = CFAAccountData Wad SimpleTimestamp
 
 -- ============================================================================
 -- SimpleAccount Type and Operations (is SuperfluidAccount)
--- ============================================================================
-
+--
 data SimpleAccount = SimpleAccount
     { address       :: SimpleAddress
     , tba           :: SimpleTBAAccountData
     , cfa           :: SimpleCFAAccountData
     , lastUpdatedAt :: SimpleTimestamp
+    }
+
+-- SimpleAccount public constructor
+createSimpleAccount :: String -> Wad -> SimpleTimestamp -> SimpleAccount
+createSimpleAccount toAddress initBalance t = SimpleAccount
+    { address = createSimpleAddress toAddress
+    , lastUpdatedAt = t
+    , tba = (def :: SimpleTBAAccountData){ TBA.liquidity = initBalance }
+    , cfa = def
     }
 
 instance Account SimpleAccount Wad SimpleTimestamp SimpleAddress where
@@ -142,14 +145,6 @@ instance SuperfluidAccount SimpleAccount Wad SimpleTimestamp SimpleAddress where
 
     updateCFAAccountData :: SimpleAccount -> SimpleCFAAccountData -> SimpleAccount
     updateCFAAccountData acc cfa' = acc { cfa = cfa' }
-
-createSimpleAccount :: String -> Wad -> SimpleTimestamp -> SimpleAccount
-createSimpleAccount toAddress initBalance t = SimpleAccount
-    { address = createSimpleAddress toAddress
-    , lastUpdatedAt = t
-    , tba = (def :: SimpleTBAAccountData){ TBA.liquidity = initBalance }
-    , cfa = def
-    }
 
 sumAllSimpleAccount :: [SimpleAccount] -> SimpleTimestamp -> SimpleRealtimeBalance
 sumAllSimpleAccount alist t = foldr

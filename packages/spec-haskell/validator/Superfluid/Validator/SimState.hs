@@ -38,8 +38,7 @@ import           Superfluid.Instances.Simple.Types
 -- | Simulation Monad Stack
 --
 --   SimpleTokenState | SimState | IO
--- ============================================================================
-
+--
 data SimData = SimData
     { currentTime  :: SimpleTimestamp
     }
@@ -56,8 +55,7 @@ runSimMonad = (flip evalStateT def) . (flip evalSimpleTokenStateT def)
 
 -- ============================================================================
 -- | Simulation Operations
--- ============================================================================
-
+--
 initSimState :: SimpleTimestamp -> [(SimpleAddress, SimpleAccount)] -> SimMonad ()
 initSimState t alist = do
     lift $ modify (\_ -> SimData { currentTime = t })

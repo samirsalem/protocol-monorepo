@@ -16,9 +16,8 @@ import           Superfluid.Concepts.RealtimeBalance (integralToLiquidity, liqui
 
 
 -- ============================================================================
--- CFAContractData Type
--- ============================================================================
-
+-- | CFAContractData Type
+--
 data (Liquidity lq, Timestamp ts) => CFAContractData lq ts = CFAContractData
     { flowLastUpdatedAt :: ts
     , flowRate          :: lq
@@ -34,9 +33,8 @@ instance (Liquidity lq, Timestamp ts) => Show (CFAContractData lq ts) where
 instance (Liquidity lq, Timestamp ts) => AgreementContractData (CFAContractData lq ts) lq ts
 
 -- ============================================================================
--- CFAAccountData Type (is AgreementAccountData)
--- ============================================================================
-
+-- | CFAAccountData Type (is AgreementAccountData)
+--
 data (Liquidity lq, Timestamp ts) => CFAAccountData lq ts = CFAAccountData
     { settledAt      :: ts
     , settledBalance :: lq
@@ -56,8 +54,7 @@ instance (Liquidity lq, Timestamp ts) => Show (CFAAccountData lq ts) where
 
 -- ============================================================================
 -- CFA Operations
--- ============================================================================
-
+--
 _updateFlowRate :: (Liquidity lq, Timestamp ts) => CFAAccountData lq ts -> lq -> ts -> CFAAccountData lq ts
 _updateFlowRate CFAAccountData { netFlowRate = r, settledBalance = b_s, settledAt = t_s } r_delta t =
     CFAAccountData

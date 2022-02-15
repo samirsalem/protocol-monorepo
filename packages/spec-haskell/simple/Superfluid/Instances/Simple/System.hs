@@ -34,8 +34,7 @@ import           Superfluid.Instances.Simple.Types
 
 -- ============================================================================
 -- SimpleTokenData Type
--- ============================================================================
-
+--
 data SimpleTokenData = SimpleTokenData
     { accounts      :: M.Map SimpleAddress SimpleAccount
     , cfaAgreements :: M.Map String SimpleCFAContractData
@@ -46,8 +45,7 @@ instance Default SimpleTokenData
 
 -- ============================================================================
 -- SimpleTokenStateT Type (is SuperfluidToken)
--- ============================================================================
-
+--
 newtype SimpleTokenStateT m a = SimpleTokenStateT
     { runSimpleTokenStateT :: SimpleTokenData -> m (a, SimpleTokenData) }
 
@@ -127,8 +125,7 @@ instance (Monad m) => SF.SuperfluidToken (SimpleTokenStateT m) where
 
 -- ============================================================================
 -- SimpleTokenStateT Operations
--- ============================================================================
-
+--
 createSimpleToken :: [(SimpleAddress, SimpleAccount)] -> SimpleTokenData
 createSimpleToken alist = SimpleTokenData
     { accounts = M.fromList alist
@@ -148,17 +145,3 @@ addAccount accountAddr account = modifyCurrentSimpleToken (\vs -> vs {
 
 listAccounts :: (Monad m) => SimpleTokenStateT m [(SimpleAddress, SimpleAccount)]
 listAccounts = getCurrentSimpleToken >>= \s -> return $ M.toList (accounts s)
-
--- ============================================================================
--- SimpleTokenStateT Type (is MonadTrans)
--- ============================================================================
-
--- ============================================================================
--- SimpleTokenList Types
--- ============================================================================
---
--- newtype SimpleTokenListData = M.Map String SimpleTokenData
---
--- type SimpleTokenListState = State SimpleTokenListData
---
--- SimpleTokenListState -> SimpleTokenStateT

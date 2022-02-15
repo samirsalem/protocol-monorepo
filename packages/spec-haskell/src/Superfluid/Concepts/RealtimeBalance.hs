@@ -9,11 +9,12 @@ import           Data.Default
 import           Superfluid.BaseTypes (Liquidity)
 
 
--- RealtimeBalance type
+-- | RealtimeBalance type
 --
 -- Naming conventions:
 --  * Type name: rtb
 --  * Type family name: RTB
+--
 data RealtimeBalance lq = RealtimeBalance
     { availableBalance :: lq
     , deposit          :: lq
