@@ -19,10 +19,9 @@ import qualified Superfluid.System                  as SF
 
 import           Superfluid.Instances.Simple.System
     ( SimpleTokenStateT
-    , createSimpleToken
     , evalSimpleTokenStateT
+    , initSimpleToken
     , listAccounts
-    , saveCurrentSimpleToken
     )
 import           Superfluid.Instances.Simple.Types
     ( SimpleAccount
@@ -59,7 +58,7 @@ runSimMonad = (flip evalStateT def) . (flip evalSimpleTokenStateT def)
 initSimState :: SimpleTimestamp -> [(SimpleAddress, SimpleAccount)] -> SimMonad ()
 initSimState t alist = do
     lift $ modify (\_ -> SimData { currentTime = t })
-    saveCurrentSimpleToken (createSimpleToken alist)
+    initSimpleToken alist
 
 getCurrentTime :: SimMonad SimpleTimestamp
 getCurrentTime = do

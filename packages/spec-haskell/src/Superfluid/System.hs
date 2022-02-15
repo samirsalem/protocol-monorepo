@@ -46,18 +46,18 @@ data SuperfluidStorageInstruction lq ts addr where
 --
 -- Naming conventions:
 --   * Type name: tk
---   * Term name: *TK
+--   * Term name: *Token
 --
 -- Notes:
 --
--- * Superfluid token should be a monad, where it provides:
---   * addressable account data,
+-- * SuperfluidToken is a monadic type, where all its functions run within the monadic context.
+-- * SuperfluidToken provides:
+--   * addressable account,
 --   * and agreement (TBA/CFA/GDA) operations.
---
 -- * To implement agreement write operations, one should use the '*Pure' helper functions which returns storage
 --   instructions for you to commit the changSimpleTimestampes.
 --
-class (Monad tk
+class ( Monad tk
       , Liquidity (LQ tk)
       , Timestamp (TS tk)
       , Address (ADDR tk)
@@ -65,15 +65,14 @@ class (Monad tk
     => SuperfluidToken tk where
 
     -- Associated type families
-    type LQ tk
-    type TS tk
-    type ADDR tk
-    type ACC tk
+    type LQ tk :: *
+    type TS tk :: *
+    type ADDR tk :: *
+    type ACC tk :: *
 
     --
     -- Account operations
     --
-
     getAccount :: ADDR tk -> tk (ACC tk)
 
     balanceOf :: ADDR tk -> TS tk -> tk (RealtimeBalance (LQ tk))
@@ -84,7 +83,6 @@ class (Monad tk
     --
     -- CFA functions
     --
-
     getFlow :: ADDR tk -> ADDR tk -> tk (CFA.CFAContractData (LQ tk) (TS tk))
 
     updateFlowPure
@@ -101,5 +99,4 @@ class (Monad tk
                , UpdateAccountFlow (senderAddr, senderFlowAAD')
                , UpdateAccountFlow (receiverAddr, receiverFlowAAD')
                ]
-
     updateFlow :: ADDR tk -> ADDR tk -> LQ tk -> TS tk -> tk ()
