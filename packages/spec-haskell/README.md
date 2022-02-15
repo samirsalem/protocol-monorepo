@@ -24,11 +24,9 @@ which exports:
 
 # Core Library
 
-The core library exposes the _Concepts_, _Agreements_ and _System_ modules.
+The core library exposes the _Base Types_, _Concepts_, _Agreements_ and _System_ modules.
 
-## Concepts Modules
-
-These are the core Superfluid protocol concept expressed in type classes.
+## Base Types Module
 
 **Timestamp**
 
@@ -37,6 +35,14 @@ These are the core Superfluid protocol concept expressed in type classes.
 **Liquidty**
 
 ...
+
+**Address**
+
+...
+
+## Concepts Modules
+
+These are the core Superfluid protocol concept expressed in type classes.
 
 **RealtimeBalance**
 

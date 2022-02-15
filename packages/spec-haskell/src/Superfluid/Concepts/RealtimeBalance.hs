@@ -6,7 +6,7 @@ module Superfluid.Concepts.RealtimeBalance
     ) where
 
 import           Data.Default
-import           Superfluid.Concepts.Liquidity (Liquidity)
+import           Superfluid.BaseTypes (Liquidity)
 
 
 -- RealtimeBalance type

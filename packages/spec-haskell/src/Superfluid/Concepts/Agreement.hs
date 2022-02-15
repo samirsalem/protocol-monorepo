@@ -1,4 +1,3 @@
-{-# LANGUAGE AllowAmbiguousTypes   #-}
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
@@ -10,9 +9,8 @@ module Superfluid.Concepts.Agreement
     ) where
 
 import           Data.Default
-import           Superfluid.Concepts.Liquidity       (Liquidity)
+import           Superfluid.BaseTypes                (Liquidity, Timestamp)
 import           Superfluid.Concepts.RealtimeBalance (RealtimeBalance (..))
-import           Superfluid.Concepts.Timestamp       (Timestamp)
 
 
 -- AgreementContractData type class

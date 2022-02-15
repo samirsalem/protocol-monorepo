@@ -1,25 +1,22 @@
-module Superfluid
-    ( Liquidity
-    , Timestamp
+module Superfluid.Types
+    ( BaseTypes.Liquidity
+    , BaseTypes.Timestamp
+    , BaseTypes.Address
     , RealtimeBalance.RealtimeBalance
+    , Account.Account
+    , Agreement.AgreementContractData
     , Agreement.AgreementAccountData
     , Agreement.AnyAgreementAccountData
-    , Account.Account
     , TBA.TBAAccountData
     , CFA.CFAContractData
     , CFA.CFAAccountData
-    , System.SuperfluidAddress
-    , System.SuperfluidAccount
-    , System.SuperfluidToken
     ) where
+
+import           Superfluid.BaseTypes                               as BaseTypes
 
 import qualified Superfluid.Concepts.Account                        as Account
 import qualified Superfluid.Concepts.Agreement                      as Agreement
-import           Superfluid.Concepts.Liquidity
 import qualified Superfluid.Concepts.RealtimeBalance                as RealtimeBalance
-import           Superfluid.Concepts.Timestamp
 
 import qualified Superfluid.Agreements.ConstantFlowAgreement        as CFA
 import qualified Superfluid.Agreements.TransferableBalanceAgreement as TBA
-
-import qualified Superfluid.System                                  as System

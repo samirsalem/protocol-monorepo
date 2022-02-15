@@ -1,29 +1,30 @@
 module SuperfluidTest where
 
 import           Control.Monad.IO.Class
-import           Control.Monad.Trans.State
 import           Data.Default
 import           Test.HUnit
 
 import qualified Superfluid.Agreements.ConstantFlowAgreement as CFA
 import qualified Superfluid.Concepts.Account                 as Account
 import qualified Superfluid.Concepts.RealtimeBalance         as RTB
-
 import qualified Superfluid.System                           as SF
 
-import           Superfluid.Instances.Simple
+import           Superfluid.Instances.Simple.System
+    ( SimpleTokenStateT
+    , addAccount
+    , evalSimpleTokenStateT
+    , listAccounts
+    )
+import           Superfluid.Instances.Simple.Types
     ( SimpleAccount
+    , SimpleAddress
     , SimpleTimestamp
-    , SimpleTokenData
-    , SimpleTokenState
     , Wad
     , createSimpleAccount
     , createSimpleAddress
     , sumAllSimpleAccount
     , toWad
     )
-import qualified Superfluid.Instances.Simple.Account         as SimpleAccount
-import qualified Superfluid.Instances.Simple.Token           as SimpleToken
 
 initBalance :: Wad
 initBalance = toWad (100.0 :: Double)
@@ -32,14 +33,21 @@ createTestAccount :: String -> SimpleTimestamp -> SimpleAccount
 createTestAccount a t = createSimpleAccount a b t
     where b = initBalance
 
-type SimpleTokenTest = StateT SimpleTokenData IO
+type SimpleTokenTest = SimpleTokenStateT IO
 
 createSimpleTokenTestCase :: String -> SimpleTokenTest () -> Test
 createSimpleTokenTestCase label testCase =
-    TestLabel label $ TestCase $ evalStateT testCase def
+    TestLabel label $ TestCase $ evalSimpleTokenStateT testCase def
 
-updateTokenState :: (SimpleTokenState ()) -> SimpleTokenTest ()
-updateTokenState op = modify $ execState op
+-- updateTokenState :: (SimpleTokenState ()) -> SimpleTokenTest ()
+-- updateTokenState op = modify $ execState op
+
+expectCFANetFlowRate :: SimpleAddress -> Double -> SimpleTokenTest ()
+expectCFANetFlowRate addr expected = do
+    account <- SF.getAccount addr
+    liftIO $ assertEqual ((show addr) ++ " net flow rate")
+        (toWad expected)
+        (CFA.netFlowRate . SF.getCFAAccountData $ account)
 
 simpleScenarioTest :: SimpleTokenTest ()
 simpleScenarioTest = do
@@ -49,34 +57,31 @@ simpleScenarioTest = do
     let carol = createSimpleAddress "carol"
 
     -- FIXME auto create account
-    updateTokenState $ SimpleToken.addAccount alice (createTestAccount "alice" t0)
-    updateTokenState $ SimpleToken.addAccount bob (createTestAccount "bob" t0)
-    updateTokenState $ SimpleToken.addAccount carol (createTestAccount "carol" t0)
+    -- s0 <- get
+    -- let accounts = evalState SimpleToken.listAccounts s0
+    -- liftIO $ assertEqual "num accounts" 3 (length accounts)
 
-    s1 <- get
-    let accounts = evalState SimpleToken.listAccounts s1
+    addAccount alice (createTestAccount "alice" t0)
+    addAccount bob (createTestAccount "bob" t0)
+    addAccount carol (createTestAccount "carol" t0)
+    accounts <- listAccounts
     liftIO $ assertEqual "num accounts" 3 (length accounts)
 
-    updateTokenState $ SF.updateFlow alice bob (toWad(0.0001::Double)) t0
-    s2 <- get
-    liftIO $ assertEqual
-        "alice net flow rate"
-        (toWad (-0.0001::Double))
-        (CFA.netFlowRate . SimpleAccount.cfa $ (evalState (SF.getAccount alice) s2))
-    liftIO $ assertEqual
-        "bob flow rate"
-        (toWad (0.0001::Double))
-        (CFA.netFlowRate . SimpleAccount.cfa $ (evalState (SF.getAccount bob) s2))
-    liftIO $ assertEqual
-        "carol flow rate"
-        (toWad (0.0000::Double))
-        (CFA.netFlowRate . SimpleAccount.cfa $ (evalState (SF.getAccount carol) s2))
+    SF.updateFlow alice bob (toWad(0.0001::Double)) t0
+
+    -- s2 <- getCurrentSimpleToken
+    expectCFANetFlowRate alice (-0.0001::Double)
+    expectCFANetFlowRate bob (0.0001::Double)
+    expectCFANetFlowRate carol (0.0000::Double)
 
     let t1 = t0 + 3600 * 24
+
+    aliceAccount <- SF.getAccount alice
     liftIO $ assertBool
         "balance sum"
-        ((RTB.liquidityFromRTB $ (Account.balanceOf (evalState (SF.getAccount alice) s2) t1))
+        ((RTB.liquidityFromRTB $ Account.balanceOf aliceAccount t1)
         < initBalance)
+
     liftIO $ assertEqual
         "balance sum"
         (RTB.availableBalance $ sumAllSimpleAccount (map snd accounts) t1)

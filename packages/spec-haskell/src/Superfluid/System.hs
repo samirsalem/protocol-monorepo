@@ -6,8 +6,7 @@
 {-# LANGUAGE TypeFamilies           #-}
 
 module Superfluid.System
-    ( SuperfluidAddress
-    , SuperfluidAccount (..)
+    ( SuperfluidAccount (..)
     , SuperfluidStorageInstruction (..)
     , SuperfluidToken (..)
     ) where
@@ -16,34 +15,35 @@ import           Control.Monad                                      (Monad)
 
 import           Superfluid.Agreements.ConstantFlowAgreement        as CFA
 import           Superfluid.Agreements.TransferableBalanceAgreement as TBA
+import           Superfluid.BaseTypes                               (Address, Liquidity, Timestamp)
 import           Superfluid.Concepts.Account                        (Account)
 import qualified Superfluid.Concepts.Account                        as Account
-import           Superfluid.Concepts.Liquidity                      (Liquidity)
 import           Superfluid.Concepts.RealtimeBalance                (RealtimeBalance)
-import           Superfluid.Concepts.Timestamp                      (Timestamp)
 
 
---- SuperfluidAddress type class
----
-class (Eq addr, Show addr) => SuperfluidAddress addr
-
---- SuperfluidAccount type class
----
-class (Liquidity lq, Timestamp ts, Account acc lq ts)
-    => SuperfluidAccount acc lq ts where
+-- ============================================================================
+-- | SuperfluidAccount
+-- ============================================================================
+class (Liquidity lq, Timestamp ts, Address addr, Account acc lq ts addr)
+    => SuperfluidAccount acc lq ts addr where
     showAt :: acc -> ts -> String
     getTBAAccountData :: acc -> TBA.TBAAccountData lq ts
+    updateTBAAccountData :: acc -> TBA.TBAAccountData lq ts -> acc
     getCFAAccountData :: acc -> CFA.CFAAccountData lq ts
+    updateCFAAccountData :: acc -> CFA.CFAAccountData lq ts -> acc
 
---- SuperfluidStorageInstruction sum type
----
+-- ============================================================================
+-- | SuperfluidStorageInstruction Sum Type
+-- ============================================================================
+
 data SuperfluidStorageInstruction lq ts addr where
     UpdateFlow :: (Liquidity lq, Timestamp ts)
         => CFA.CFAContractData lq ts -> SuperfluidStorageInstruction lq ts addr
-    UpdateAccountFlow :: (Liquidity lq, Timestamp ts, SuperfluidAddress addr)
+    UpdateAccountFlow :: (Liquidity lq, Timestamp ts, Address addr)
         => (addr, CFA.CFAAccountData lq ts) -> SuperfluidStorageInstruction lq ts addr
 
--- SuperfluidToken type class
+-- ============================================================================
+-- | SuperfluidToken Type Class
 --
 -- Naming conventions:
 --   * Type name: tk
@@ -58,11 +58,13 @@ data SuperfluidStorageInstruction lq ts addr where
 -- * To implement agreement write operations, one should use the '*Pure' helper functions which returns storage
 --   instructions for you to commit the changSimpleTimestampes.
 --
+-- ============================================================================
+
 class (Monad tk
       , Liquidity (LQ tk)
       , Timestamp (TS tk)
-      , SuperfluidAddress (ADDR tk)
-      , SuperfluidAccount (ACC tk) (LQ tk) (TS tk))
+      , Address (ADDR tk)
+      , SuperfluidAccount (ACC tk) (LQ tk) (TS tk) (ADDR tk))
     => SuperfluidToken tk where
 
     -- Associated type families

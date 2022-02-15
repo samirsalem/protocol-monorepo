@@ -6,10 +6,9 @@ module Superfluid.Concepts.Account
     ( Account (..)
     ) where
 
+import           Superfluid.BaseTypes                (Address, Liquidity, Timestamp)
 import           Superfluid.Concepts.Agreement       (AnyAgreementAccountData, providedBalanceOfAnyAgreement)
-import           Superfluid.Concepts.Liquidity       (Liquidity)
 import           Superfluid.Concepts.RealtimeBalance (RealtimeBalance, liquidityToRTB)
-import           Superfluid.Concepts.Timestamp       (Timestamp)
 
 
 -- Account type class
@@ -18,8 +17,13 @@ import           Superfluid.Concepts.Timestamp       (Timestamp)
 --   * Type name: acc
 --   * Type family name: ACC
 --   * Term name: *Account
-class (Liquidity lq, Timestamp ts)
-    => Account acc lq ts | acc -> lq, acc -> ts where
+class (Liquidity lq, Timestamp ts, Address addr)
+    => Account acc lq ts addr | acc -> lq, acc -> ts, acc -> addr where
+
+    address :: acc -> addr
+
+    -- ?? return type polymorphism??
+    -- getAgreement :: (AgreementAccountData aad lq ts) => acc -> aad
 
     agreementsOf :: acc -> [AnyAgreementAccountData lq ts]
 

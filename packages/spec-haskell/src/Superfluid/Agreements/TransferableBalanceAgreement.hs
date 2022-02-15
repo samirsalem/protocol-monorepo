@@ -8,10 +8,9 @@ module Superfluid.Agreements.TransferableBalanceAgreement
 import           Data.Default
 import           Text.Printf
 
+import           Superfluid.BaseTypes                (Liquidity, Timestamp)
 import           Superfluid.Concepts.Agreement       (AgreementAccountData (..))
-import           Superfluid.Concepts.Liquidity       (Liquidity)
 import           Superfluid.Concepts.RealtimeBalance (liquidityToRTB)
-import           Superfluid.Concepts.Timestamp       (Timestamp)
 
 
 data (Liquidity lq, Timestamp ts) => TBAAccountData lq ts = TBAAccountData

@@ -1,6 +1,6 @@
 module Superfluid.Validator.SimState
-    ( SimState
-    , SimStateMonad
+    ( SimMonad
+    , runSimMonad
     , initSimState
     , getCurrentTime
     , timeTravel
@@ -8,91 +8,97 @@ module Superfluid.Validator.SimState
     , printAccount
     , printAccountByAlias
     , printSimState
-    , execTokenStateOp
     ) where
 
 import           Control.Monad.IO.Class
+import           Control.Monad.Trans.Class
 import           Control.Monad.Trans.State
 import           Data.Default
 
-import qualified Superfluid.System           as SF
+import qualified Superfluid.System                  as SF
 
-import           Superfluid.Instances.Simple
+import           Superfluid.Instances.Simple.System
+    ( SimpleTokenStateT
+    , createSimpleToken
+    , evalSimpleTokenStateT
+    , listAccounts
+    , saveCurrentSimpleToken
+    )
+import           Superfluid.Instances.Simple.Types
     ( SimpleAccount
     , SimpleAddress
     , SimpleRealtimeBalance
     , SimpleTimestamp
-    , SimpleTokenData
-    , SimpleTokenState
     , createSimpleAddress
-    , createSimpleToken
-    , listAccounts
     , sumAllSimpleAccount
     )
 
 
+-- ============================================================================
+-- | Simulation Monad Stack
+--
+--   SimpleTokenState | SimState | IO
+-- ============================================================================
 
-data SimState = SimState
+data SimData = SimData
     { currentTime  :: SimpleTimestamp
-    , defaultToken :: SimpleTokenData
     }
 
-type SimStateMonad = StateT SimState IO
+instance Default SimData where
+    def = SimData { currentTime = def }
 
-instance Default SimState
-    where def = SimState { currentTime = def, defaultToken = undefined }
+type SimStateT = StateT SimData
 
-initSimState :: SimpleTimestamp -> [(SimpleAddress, SimpleAccount)] -> SimStateMonad ()
-initSimState t alist = modify (\_ -> SimState
-        { currentTime = t
-        , defaultToken = createSimpleToken alist
-        })
+type SimMonad = SimpleTokenStateT (SimStateT IO)
 
-getCurrentTime :: SimStateMonad SimpleTimestamp
+runSimMonad :: SimMonad () -> IO ()
+runSimMonad = (flip evalStateT def) . (flip evalSimpleTokenStateT def)
+
+-- ============================================================================
+-- | Simulation Operations
+-- ============================================================================
+
+initSimState :: SimpleTimestamp -> [(SimpleAddress, SimpleAccount)] -> SimMonad ()
+initSimState t alist = do
+    lift $ modify (\_ -> SimData { currentTime = t })
+    saveCurrentSimpleToken (createSimpleToken alist)
+
+getCurrentTime :: SimMonad SimpleTimestamp
 getCurrentTime = do
-    s <- get
+    s <- lift $ get
     return (currentTime s)
 
-timeTravel :: Integer -> SimStateMonad SimpleTimestamp
+timeTravel :: Integer -> SimMonad SimpleTimestamp
 timeTravel d = do
-    s <- get
+    s <- lift $ get
     let t' = fromInteger $ d + toInteger (currentTime s)
-    modify (\vs -> vs { currentTime = t' })
+    lift $ modify (\vs -> vs { currentTime = t' })
     return t'
 
-getAccountByAlias :: String -> SimStateMonad SimpleAccount
-getAccountByAlias alias = get >>= \s ->
-    return $ evalState (SF.getAccount addr) (defaultToken s)
-    where addr = createSimpleAddress alias
+getAccountByAlias :: String -> SimMonad SimpleAccount
+getAccountByAlias alias = SF.getAccount $ createSimpleAddress alias
 
-printAccount :: SimpleAccount -> SimStateMonad ()
+printAccount :: SimpleAccount -> SimMonad ()
 printAccount acc = do
-    s <- get
+    s <- lift $ get
     liftIO $ putStrLn $ SF.showAt acc (currentTime s)
 
-printAccountByAlias :: String -> SimStateMonad ()
+printAccountByAlias :: String -> SimMonad ()
 printAccountByAlias alias = getAccountByAlias alias >>= printAccount
 
-sumTotalLiquidity :: SimStateMonad SimpleRealtimeBalance
+sumTotalLiquidity :: SimMonad SimpleRealtimeBalance
 sumTotalLiquidity = do
-    s <- get
-    let accounts = evalState listAccounts (defaultToken s)
+    s <- lift $ get
+    accounts <- listAccounts
     return $ sumAllSimpleAccount (map snd accounts) (currentTime s)
 
-printSimState :: SimStateMonad ()
+printSimState :: SimMonad ()
 printSimState = do
-    s <- get
     let banner = 80 `replicate` '='
-    let accounts = evalState listAccounts (defaultToken s)
     liftIO $ putStrLn banner
     liftIO $ putStrLn $ "Accounts: "
-    -- mapM_ ((printAccountByAlias s) . show . fst) accounts
+    accounts <- listAccounts
     mapM_ (printAccount . snd) accounts
     totalLiquidtySum <- sumTotalLiquidity
     liftIO $ putStrLn $ "Total Balance: " ++ (show totalLiquidtySum)
     liftIO $ putStrLn (banner ++ "\n")
-
-execTokenStateOp :: (SimpleTokenState ()) -> SimStateMonad ()
-execTokenStateOp op = modify (\s -> s {
-        defaultToken = execState op (defaultToken s)
-    })

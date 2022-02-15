@@ -7,22 +7,22 @@ maintainer:         miao@superfluid.finance
 author:             Miao ZhiCheng
 homepage:           https://www.superfluid.finance/
 synopsis:           Superfluid protocol specifications in Haskell
-category:           Data
+category:           Finance
 build-type:         Simple
 extra-source-files: CHANGELOG.md
 
 library core
     exposed-modules:
-        Superfluid.Concepts.Liquidity
-        Superfluid.Concepts.Timestamp
+        Superfluid.BaseTypes
         Superfluid.Concepts.RealtimeBalance
         Superfluid.Concepts.Agreement
         Superfluid.Concepts.Account
         Superfluid.Agreements.TransferableBalanceAgreement
         Superfluid.Agreements.ConstantFlowAgreement
+        Superfluid.Types
         Superfluid.System
-        Superfluid
 
+    visibility:       public
     hs-source-dirs:   src
     default-language: Haskell2010
     ghc-options:      -Wall
@@ -34,10 +34,8 @@ library core
 
 library simple
     exposed-modules:
-        Superfluid.Instances.Simple.BaseTypes
-        Superfluid.Instances.Simple.Account
-        Superfluid.Instances.Simple.Token
-        Superfluid.Instances.Simple
+        Superfluid.Instances.Simple.Types
+        Superfluid.Instances.Simple.System
 
     visibility:       public
     hs-source-dirs:   simple
