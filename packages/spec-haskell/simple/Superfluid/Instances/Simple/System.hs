@@ -1,6 +1,5 @@
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE InstanceSigs      #-}
 {-# LANGUAGE TypeFamilies      #-}
 
 module Superfluid.Instances.Simple.System
@@ -10,7 +9,8 @@ module Superfluid.Instances.Simple.System
     , addAccount
     , listAccounts
     , runSimpleTokenStateT
-    , evalSimpleTokenStateT)
+    , evalSimpleTokenStateT
+    , withSimpleTokenStateT)
     where
 
 import           Control.Monad.IO.Class
@@ -33,7 +33,7 @@ import           Superfluid.Instances.Simple.Types
 
 
 -- ============================================================================
--- SimpleTokenData Type
+-- | SimpleTokenData Type
 --
 data SimpleTokenData = SimpleTokenData
     { accounts      :: M.Map SimpleAddress SimpleAccount
@@ -44,25 +44,10 @@ instance Default SimpleTokenData
     where def = SimpleTokenData { accounts = def, cfaAgreements = def }
 
 -- ============================================================================
--- SimpleTokenStateT Type (is SuperfluidToken)
+-- | SimpleTokenStateT Type is a MonadTrans instance
 --
 newtype SimpleTokenStateT m a = SimpleTokenStateT
     { runSimpleTokenStateT :: SimpleTokenData -> m (a, SimpleTokenData) }
-
-evalSimpleTokenStateT :: (Monad m) => SimpleTokenStateT m a -> SimpleTokenData -> m a
-evalSimpleTokenStateT m s = runSimpleTokenStateT m s >>= return . fst
-
-getSimpleTokenData :: (Monad m) => SimpleTokenStateT m SimpleTokenData
-getSimpleTokenData = SimpleTokenStateT (return . \s -> (s, s))
-
-putSimpleTokenData :: (Monad m) => SimpleTokenData -> SimpleTokenStateT m ()
-putSimpleTokenData s = SimpleTokenStateT (return . \_ -> ((), s))
-
-modifySimpleTokenData :: (Monad m) => (SimpleTokenData -> SimpleTokenData) -> SimpleTokenStateT m ()
-modifySimpleTokenData f = SimpleTokenStateT (return . \s -> ((), f s))
-
-instance MonadTrans SimpleTokenStateT where
-    lift c = SimpleTokenStateT $ \s -> c >>= (\x -> return (x, s))
 
 instance (Monad m) => Functor (SimpleTokenStateT m) where
     fmap f m = SimpleTokenStateT $ \ s ->
@@ -83,6 +68,36 @@ instance (Monad m) => Monad (SimpleTokenStateT m) where
 instance (MonadIO m) => MonadIO (SimpleTokenStateT m) where
     liftIO = lift . liftIO
 
+instance MonadTrans SimpleTokenStateT where
+    lift c = SimpleTokenStateT $ \s -> c >>= (\x -> return (x, s))
+
+evalSimpleTokenStateT :: (Monad m)
+    => SimpleTokenStateT m a -> SimpleTokenData -> m a
+evalSimpleTokenStateT m s = runSimpleTokenStateT m s >>= return . fst
+
+withSimpleTokenStateT :: (Monad m)
+    => (SimpleTokenData -> SimpleTokenData) -> SimpleTokenStateT m a -> SimpleTokenStateT m a
+withSimpleTokenStateT f m = SimpleTokenStateT $ runSimpleTokenStateT m . f >>= return
+
+-- | SimpleTokenStateT State Operations
+--
+getSimpleTokenData :: (Monad m) => SimpleTokenStateT m SimpleTokenData
+getSimpleTokenData = SimpleTokenStateT (return . \s -> (s, s))
+
+putSimpleTokenData :: (Monad m) => SimpleTokenData -> SimpleTokenStateT m ()
+putSimpleTokenData s = SimpleTokenStateT (return . \_ -> ((), s))
+
+modifySimpleTokenData :: (Monad m) => (SimpleTokenData -> SimpleTokenData) -> SimpleTokenStateT m ()
+modifySimpleTokenData f = SimpleTokenStateT (return . \s -> ((), f s))
+
+initSimpleToken :: (Monad m) => [(SimpleAddress, SimpleAccount)] -> SimpleTokenStateT m ()
+initSimpleToken alist = putSimpleTokenData SimpleTokenData
+    { accounts = M.fromList alist
+    , cfaAgreements = M.fromList []
+    }
+
+-- | SimpleTokenStateT m is a SuperfluidToken instance
+--
 instance (Monad m) => SF.SuperfluidToken (SimpleTokenStateT m) where
 
     type LQ (SimpleTokenStateT m) = Wad
@@ -90,19 +105,16 @@ instance (Monad m) => SF.SuperfluidToken (SimpleTokenStateT m) where
     type ADDR (SimpleTokenStateT m) = SimpleAddress
     type ACC (SimpleTokenStateT m) = SimpleAccount
 
-    getAccount :: SimpleAddress -> SimpleTokenStateT m SimpleAccount
     getAccount a = getSimpleTokenData >>= \s -> return $
         case M.lookup a (accounts s) of
             Just value -> value
             Nothing    -> createSimpleAccount a (toWad (0 :: Double)) 0
 
-    getFlow :: SimpleAddress -> SimpleAddress -> SimpleTokenStateT m SimpleCFAContractData
     getFlow a b = getSimpleTokenData >>= \s -> return $
         case M.lookup (show(a)++":"++show(b)) (cfaAgreements s) of
             Just value -> value
             Nothing    -> CFA.CFAContractData 0 0
 
-    updateFlow :: SimpleAddress -> SimpleAddress -> Wad -> SimpleTimestamp -> SimpleTokenStateT m ()
     updateFlow sender receiver newFlowRate t = do
         updates <- SF.updateFlowPure sender receiver newFlowRate t
         mapM_ (\u -> case u of
@@ -123,15 +135,8 @@ instance (Monad m) => SF.SuperfluidToken (SimpleTokenStateT m) where
                 })
             ) updates
 
--- ============================================================================
--- SimpleTokenStateT Operations
+-- | Other SimpleTokenStateT Operations
 --
-initSimpleToken :: (Monad m) => [(SimpleAddress, SimpleAccount)] -> SimpleTokenStateT m ()
-initSimpleToken alist = putSimpleTokenData SimpleTokenData
-    { accounts = M.fromList alist
-    , cfaAgreements = M.fromList []
-    }
-
 addAccount :: (Monad m) => SimpleAddress -> SimpleAccount -> SimpleTokenStateT m ()
 addAccount accountAddr account = modifySimpleTokenData (\vs -> vs {
     accounts = M.insert

@@ -52,7 +52,7 @@ executable superfluid-protocol-validator
     main-is:          Superfluid/Validator/Main.hs
     hs-source-dirs:   validator
     other-modules:
-        Superfluid.Validator.SimState
+        Superfluid.Validator.Simulation
         Superfluid.Validator.Demo
 
     default-language: Haskell2010

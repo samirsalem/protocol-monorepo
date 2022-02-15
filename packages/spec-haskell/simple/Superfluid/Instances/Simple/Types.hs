@@ -68,7 +68,7 @@ instance Liquidity Wad where
 -- ============================================================================
 -- SimpleTimestamp Base Type
 --
-newtype SimpleTimestamp = SimpleTimestamp Integer deriving (Enum, Eq, Ord, Num, Real, Integral, Default)
+newtype SimpleTimestamp = SimpleTimestamp Int deriving (Enum, Eq, Ord, Num, Real, Integral, Default)
 
 instance Timestamp SimpleTimestamp
 
