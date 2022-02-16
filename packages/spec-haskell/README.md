@@ -9,7 +9,8 @@ which exports:
 -   `superfluid-protocol-validator` - an executable where a protocol simulation environment is provided, and test
     outputs of the production protocol implementations can be validated against the specification.
 
-# Development
+Development
+===========
 
 **Prerequisite**
 
@@ -27,11 +28,14 @@ $ # TDD with both test suite and a demo run
 $ TEST_TARGET="test-suite test-demo" make dev
 ```
 
-# Core Library
+Packages
+========
+
+## Core Library
 
 The core library exposes the _Base Types_, _Concepts_, _Agreements_ and _System_ modules.
 
-## Base Types Module
+### Base Types Module
 
 **Timestamp**
 
@@ -47,7 +51,7 @@ attach different meaning to, such as demand deposit, safety deposit, app loan & 
 
 `class Address addr` type class describe types (`Eq addr`) which addresses the accounts in a _Superfluid system_.
 
-## Concepts Modules
+### Concepts Modules
 
 These are the core Superfluid protocol concepts expressed in multi-parameter type classes.
 
@@ -70,7 +74,7 @@ the account.
 `Account acc lq ts rtb addr` type class describes addressable account types, where all agreement account data of the
 account is enumerable.
 
-## Agreements Modules
+### Agreements Modules
 
 These are instances of the agreement concept:
 
@@ -81,20 +85,20 @@ These are instances of the agreement concept:
 -   **GeneralDistributionAgreement**: a pubsub-like payment modality allowing publisher to pay its subscribers in
     predefined proportions instantly or in streams.
 
-## System Modules
+### System Modules
 
 These encapsulate Superfluid concepts and agreements as `SuperfluidToken` monad for building any _Superfluid system_.
 
 # Simple Library
 
-A simple system where the Superfluid core type classes are instantiated with simple types mainly for testing purpose:
+The _Simple Superfluid system_ where the Superfluid core type classes are instantiated with simple types mainly for testing purpose:
 
 -   `Timestamp` is `Integer`.
 -   `Liquidity` is `Wad`.
 -   `Address` in `String`.
 -   `SimpleTokenStateT` is a `SuperfluidToken` monad transformer for building your monad stack with.
 
-# Validator Executable
+# Validator
 
 The executable provides three major modes:
 
@@ -108,3 +112,5 @@ specification.
 They are written in HUnit.
 
 [TODO] WIP, quickchecks, etc...
+
+# 
