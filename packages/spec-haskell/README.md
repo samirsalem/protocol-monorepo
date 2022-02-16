@@ -89,7 +89,7 @@ These are instances of the agreement concept:
 
 These encapsulate Superfluid concepts and agreements as `SuperfluidToken` monad for building any _Superfluid system_.
 
-# Simple Library
+## Simple Library
 
 The _Simple Superfluid system_ where the Superfluid core type classes are instantiated with simple types mainly for testing purpose:
 
@@ -98,7 +98,7 @@ The _Simple Superfluid system_ where the Superfluid core type classes are instan
 -   `Address` in `String`.
 -   `SimpleTokenStateT` is a `SuperfluidToken` monad transformer for building your monad stack with.
 
-# Validator
+## Validator
 
 The executable provides three major modes:
 
@@ -107,10 +107,11 @@ The executable provides three major modes:
 - [TODO] Validator - Take test output from a _Superfluid system_ implementation and validate it against the
 specification.
 
-# Test Suite
+## Test Suite
 
 They are written in HUnit.
 
 [TODO] WIP, quickchecks, etc...
 
-# 
+FAQ
+===
