@@ -154,11 +154,11 @@ instance Account SimpleAccount Wad SimpleTimestamp SimpleRealtimeBalance SimpleA
 
 instance SuperfluidAccount SimpleAccount Wad SimpleTimestamp SimpleRealtimeBalance SimpleAddress where
     showAt a t =
-        "Account: " ++ show(address a) ++
+        "Account @" ++ show(address a) ++
         "\n  Balance: " ++ show((Account.balanceOf a t) :: SimpleRealtimeBalance) ++
-        "\n  TBA Data: " ++ show(tba a) ++
-        "\n  CFA Data: " ++ show(cfa a) ++
-        "\n  last Updated: " ++ show(lastUpdatedAt a)
+        "\n  TBA: " ++ show(tba a) ++
+        "\n  CFA: " ++ show(cfa a) ++
+        "\n  Last Update: " ++ show(lastUpdatedAt a)
 
     getTBAAccountData :: SimpleAccount -> SimpleTBAAccountData
     getTBAAccountData = tba

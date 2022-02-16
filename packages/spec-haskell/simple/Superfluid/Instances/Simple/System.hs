@@ -50,6 +50,7 @@ instance Default SimpleTokenData
 newtype SimpleTokenStateT m a = SimpleTokenStateT
     { runSimpleTokenStateT :: SimpleTokenData -> m (a, SimpleTokenData) }
 
+-- FIXME can we derive all these boilerplate instead?
 instance (Monad m) => Functor (SimpleTokenStateT m) where
     fmap f m = SimpleTokenStateT $ \ s ->
         fmap (\ ~(a, s') -> (f a, s')) $ runSimpleTokenStateT m s

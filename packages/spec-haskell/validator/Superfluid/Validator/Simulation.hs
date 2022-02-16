@@ -15,11 +15,11 @@ module Superfluid.Validator.Simulation
     , printTokenState
     ) where
 
-import GHC.Stack
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.State
 import           Data.Default
 import qualified Data.Map                           as M
+import           GHC.Stack
 
 import qualified Superfluid.System                  as SF
 
@@ -96,7 +96,7 @@ getAccountByAlias alias _= SF.getAccount $ createSimpleAddress alias
 
 printAccount :: HasCallStack => SimpleAccount -> SimData -> TokenMonad ()
 printAccount acc s = do
-    liftIO $ putStrLn $ SF.showAt acc (currentTime s)
+    liftIO $ putStrLn $ SF.showAt acc (currentTime s) ++ "\n"
 
 printAccountByAlias :: HasCallStack => String -> SimData -> TokenMonad ()
 printAccountByAlias alias s = getAccountByAlias alias s >>= flip printAccount s
@@ -108,11 +108,12 @@ sumTotalLiquidity s = do
 
 printTokenState :: HasCallStack => SimData -> TokenMonad ()
 printTokenState s = do
-    let banner = 80 `replicate` '='
+    let banner = 60 `replicate` '='
     liftIO $ putStrLn banner
-    liftIO $ putStrLn $ "Accounts: "
+    liftIO $ putStrLn $ "## Accounts\n"
     accounts <- listAccounts
     mapM_ (flip (printAccount . snd) s) accounts
     totalLiquidtySum <- sumTotalLiquidity s
+    liftIO $ putStrLn $ "## Token Info\n"
     liftIO $ putStrLn $ "Total Balance: " ++ (show totalLiquidtySum)
     liftIO $ putStrLn (banner ++ "\n")
