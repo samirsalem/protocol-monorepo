@@ -19,7 +19,6 @@ library core
         Superfluid.Concepts.Account
         Superfluid.Agreements.TransferableBalanceAgreement
         Superfluid.Agreements.ConstantFlowAgreement
-        Superfluid.Types
         Superfluid.System
 
     visibility:       public

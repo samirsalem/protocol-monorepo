@@ -23,16 +23,11 @@ module Superfluid.Instances.Simple.Types
 import           Data.Default
 import           Text.Printf                                        (printf)
 
-import           Superfluid.Types
-    ( Account
-    , Address
-    , CFAAccountData
-    , CFAContractData
-    , Liquidity
-    , RealtimeBalance
-    , TBAAccountData
-    , Timestamp
-    )
+import           Superfluid.Agreements.ConstantFlowAgreement        (CFAAccountData, CFAContractData)
+import           Superfluid.Agreements.TransferableBalanceAgreement (TBAAccountData)
+import           Superfluid.BaseTypes                               (Address, Liquidity, Timestamp)
+import           Superfluid.Concepts.Account                        (Account)
+import           Superfluid.Concepts.RealtimeBalance                (RealtimeBalance)
 
 import qualified Superfluid.Agreements.TransferableBalanceAgreement as TBA
 import qualified Superfluid.Concepts.Account                        as Account (Account (..), balanceOf)
