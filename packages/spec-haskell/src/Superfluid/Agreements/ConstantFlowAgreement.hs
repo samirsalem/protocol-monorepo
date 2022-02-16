@@ -10,9 +10,9 @@ module Superfluid.Agreements.ConstantFlowAgreement
 import           Data.Default
 import           Text.Printf
 
-import           Superfluid.BaseTypes                (Liquidity, Timestamp)
+import           Superfluid.BaseTypes                (Liquidity, Timestamp, integralToLiquidity)
 import           Superfluid.Concepts.Agreement       (AgreementAccountData (..), AgreementContractData)
-import           Superfluid.Concepts.RealtimeBalance (integralToLiquidity, liquidityToRTB)
+import           Superfluid.Concepts.RealtimeBalance (RealtimeBalance, liquidityToRTB)
 
 
 -- ============================================================================
@@ -30,7 +30,8 @@ instance (Liquidity lq, Timestamp ts) => Show (CFAContractData lq ts) where
     show x = printf "{ flowLastUpdatedAt = %s, flowRate = %s }"
         (show $ flowLastUpdatedAt x) (show $ flowRate x)
 
-instance (Liquidity lq, Timestamp ts) => AgreementContractData (CFAContractData lq ts) lq ts
+instance (Liquidity lq, Timestamp ts, RealtimeBalance rtb lq)
+    => AgreementContractData (CFAContractData lq ts) lq ts rtb
 
 -- ============================================================================
 -- | CFAAccountData Type (is AgreementAccountData)
@@ -41,14 +42,17 @@ data (Liquidity lq, Timestamp ts) => CFAAccountData lq ts = CFAAccountData
     , netFlowRate    :: lq
     }
 
-instance (Liquidity lq, Timestamp ts) => Default (CFAAccountData lq ts) where
+instance (Liquidity lq, Timestamp ts)
+    => Default (CFAAccountData lq ts) where
     def = CFAAccountData { settledAt = def, settledBalance = def, netFlowRate = def }
 
-instance (Liquidity lq, Timestamp ts) => AgreementAccountData (CFAAccountData lq ts) lq ts where
+instance (Liquidity lq, Timestamp ts, RealtimeBalance rtb lq)
+    => AgreementAccountData (CFAAccountData lq ts) lq ts rtb where
     providedBalanceOf CFAAccountData { netFlowRate = r, settledBalance = b_s, settledAt = t_s } t =
         liquidityToRTB $ integralToLiquidity(t - t_s) * r + b_s
 
-instance (Liquidity lq, Timestamp ts) => Show (CFAAccountData lq ts) where
+instance (Liquidity lq, Timestamp ts)
+    => Show (CFAAccountData lq ts) where
     show x = printf "{ settledAt = %s, settledBalance = %s, netFlowRate = %s }"
         (show $ settledAt x) (show $ settledBalance x) (show $ netFlowRate x)
 

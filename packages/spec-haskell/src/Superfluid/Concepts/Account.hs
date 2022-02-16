@@ -17,17 +17,18 @@ import           Superfluid.Concepts.RealtimeBalance (RealtimeBalance, liquidity
 --   * Type name: acc
 --   * Type family name: ACC
 --   * Term name: *Account
-class (Liquidity lq, Timestamp ts, Address addr)
-    => Account acc lq ts addr | acc -> lq, acc -> ts, acc -> addr where
+class (Liquidity lq, Timestamp ts, RealtimeBalance rtb lq, Address addr)
+    => Account acc lq ts rtb addr
+    | acc -> lq, acc -> ts, acc -> addr, acc -> rtb where
 
     address :: acc -> addr
 
     -- TODO return type polymorphism
     -- getAgreement :: (AgreementAccountData aad lq ts) => acc -> aad
 
-    agreementsOf :: acc -> [AnyAgreementAccountData lq ts]
+    agreementsOf :: acc -> [AnyAgreementAccountData lq ts rtb]
 
-    balanceOf :: acc -> ts -> RealtimeBalance lq
+    balanceOf :: acc -> ts -> rtb
     balanceOf holderAccount t = foldr
         (+)
         (liquidityToRTB . fromInteger $ 0)

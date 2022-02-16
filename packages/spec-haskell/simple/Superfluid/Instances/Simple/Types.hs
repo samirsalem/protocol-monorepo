@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingVia                #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE InstanceSigs               #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
@@ -36,6 +37,7 @@ import           Superfluid.Types
 import qualified Superfluid.Agreements.TransferableBalanceAgreement as TBA
 import qualified Superfluid.Concepts.Account                        as Account (Account (..), balanceOf)
 import           Superfluid.Concepts.Agreement                      (AnyAgreementAccountData (MkAgreementAccountData))
+import qualified Superfluid.Concepts.RealtimeBalance                as RTB
 
 import           Superfluid.System                                  (SuperfluidAccount (..))
 
@@ -78,7 +80,31 @@ instance Show SimpleTimestamp where
 -- ============================================================================
 -- SimpleRealtimeBalance Base Type
 --
-type SimpleRealtimeBalance = RealtimeBalance Wad
+data SimpleRealtimeBalance = SimpleRealtimeBalance
+    { availableBalance :: Wad
+    , deposit          :: Wad
+    , owedDeposit      :: Wad
+    }
+    deriving Num via RTB.RealtimeBalanceAsNum SimpleRealtimeBalance Wad
+
+instance Default SimpleRealtimeBalance where
+    def = SimpleRealtimeBalance { availableBalance = def, deposit = def, owedDeposit = def }
+
+instance RealtimeBalance SimpleRealtimeBalance Wad where
+    availableBalance = availableBalance
+    toBalanceVector x = map (flip id x) [availableBalance, deposit, owedDeposit]
+    fromBalanceVector v = if length v == 3
+        then SimpleRealtimeBalance (v!!0) (v!!1) (v!!2)
+        else error "wrong balance vector"
+    liquidityToRTB x = SimpleRealtimeBalance x o o where o = fromInteger(0)
+
+instance Show SimpleRealtimeBalance where
+    show (SimpleRealtimeBalance avb d od) =
+        "RTB("
+        ++ show avb ++ "@avb, "
+        ++ show d ++ "@d, "
+        ++ show od ++ "@od"
+        ++ ")"
 
 -- ============================================================================
 -- SimpleAddress Base Type
@@ -118,7 +144,7 @@ createSimpleAccount toAddress initBalance t = SimpleAccount
     , cfa = def
     }
 
-instance Account SimpleAccount Wad SimpleTimestamp SimpleAddress where
+instance Account SimpleAccount Wad SimpleTimestamp SimpleRealtimeBalance SimpleAddress where
     address = address
 
     agreementsOf a =
@@ -126,7 +152,7 @@ instance Account SimpleAccount Wad SimpleTimestamp SimpleAddress where
         , MkAgreementAccountData $ cfa a
         ]
 
-instance SuperfluidAccount SimpleAccount Wad SimpleTimestamp SimpleAddress where
+instance SuperfluidAccount SimpleAccount Wad SimpleTimestamp SimpleRealtimeBalance SimpleAddress where
     showAt a t =
         "Account: " ++ show(address a) ++
         "\n  Balance: " ++ show((Account.balanceOf a t) :: SimpleRealtimeBalance) ++

@@ -24,8 +24,8 @@ import           Superfluid.Concepts.RealtimeBalance                (RealtimeBal
 -- ============================================================================
 -- | SuperfluidAccount
 --
-class (Liquidity lq, Timestamp ts, Address addr, Account acc lq ts addr)
-    => SuperfluidAccount acc lq ts addr where
+class (Liquidity lq, Timestamp ts, RealtimeBalance rtb lq, Address addr, Account acc lq ts rtb addr)
+    => SuperfluidAccount acc lq ts rtb addr where
     showAt :: acc -> ts -> String
     getTBAAccountData :: acc -> TBA.TBAAccountData lq ts
     updateTBAAccountData :: acc -> TBA.TBAAccountData lq ts -> acc
@@ -61,12 +61,13 @@ class ( Monad tk
       , Liquidity (LQ tk)
       , Timestamp (TS tk)
       , Address (ADDR tk)
-      , SuperfluidAccount (ACC tk) (LQ tk) (TS tk) (ADDR tk))
+      , SuperfluidAccount (ACC tk) (LQ tk) (TS tk) (RTB tk)(ADDR tk))
     => SuperfluidToken tk where
 
     -- Associated type families
     type LQ tk :: *
     type TS tk :: *
+    type RTB tk :: *
     type ADDR tk :: *
     type ACC tk :: *
 
@@ -75,7 +76,7 @@ class ( Monad tk
     --
     getAccount :: ADDR tk -> tk (ACC tk)
 
-    balanceOf :: ADDR tk -> TS tk -> tk (RealtimeBalance (LQ tk))
+    balanceOf :: ADDR tk -> TS tk -> tk (RTB tk)
     balanceOf addr t = do
         account <- getAccount addr
         return $ Account.balanceOf account t

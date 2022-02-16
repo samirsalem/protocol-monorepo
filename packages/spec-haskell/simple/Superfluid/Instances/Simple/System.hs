@@ -25,6 +25,7 @@ import           Superfluid.Instances.Simple.Types
     ( SimpleAccount
     , SimpleAddress
     , SimpleCFAContractData
+    , SimpleRealtimeBalance
     , SimpleTimestamp
     , Wad
     , createSimpleAccount
@@ -102,6 +103,7 @@ instance (Monad m) => SF.SuperfluidToken (SimpleTokenStateT m) where
 
     type LQ (SimpleTokenStateT m) = Wad
     type TS (SimpleTokenStateT m) = SimpleTimestamp
+    type RTB (SimpleTokenStateT m) = SimpleRealtimeBalance
     type ADDR (SimpleTokenStateT m) = SimpleAddress
     type ACC (SimpleTokenStateT m) = SimpleAccount
 

@@ -7,7 +7,9 @@ import           Data.Default
 -- Naming conventions:
 --  * Type name: lq
 --  * Type family name: LQ
-class (Default lq, Num lq, Ord lq, Show lq) => Liquidity lq
+class (Default lq, Num lq, Ord lq, Show lq) => Liquidity lq where
+    integralToLiquidity :: (Integral int) => int -> lq
+    integralToLiquidity = fromInteger . toInteger
 
 -- | Timestamp Type Class
 --

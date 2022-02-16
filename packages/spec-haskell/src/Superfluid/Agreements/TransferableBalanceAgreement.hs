@@ -10,7 +10,7 @@ import           Text.Printf
 
 import           Superfluid.BaseTypes                (Liquidity, Timestamp)
 import           Superfluid.Concepts.Agreement       (AgreementAccountData (..))
-import           Superfluid.Concepts.RealtimeBalance (liquidityToRTB)
+import           Superfluid.Concepts.RealtimeBalance (RealtimeBalance, liquidityToRTB)
 
 
 data (Liquidity lq, Timestamp ts) => TBAAccountData lq ts = TBAAccountData
@@ -18,11 +18,14 @@ data (Liquidity lq, Timestamp ts) => TBAAccountData lq ts = TBAAccountData
     , liquidity :: lq
     }
 
-instance (Liquidity lq, Timestamp ts) => Default (TBAAccountData lq ts) where
+instance (Liquidity lq, Timestamp ts)
+    => Default (TBAAccountData lq ts) where
     def = TBAAccountData { settledAt = def, liquidity = def }
 
-instance (Liquidity lq, Timestamp ts) => AgreementAccountData (TBAAccountData lq ts) lq ts where
+instance (Liquidity lq, Timestamp ts, RealtimeBalance rtb lq)
+    => AgreementAccountData (TBAAccountData lq ts) lq ts rtb where
     providedBalanceOf a _ = liquidityToRTB $ liquidity a
 
-instance (Liquidity lq, Timestamp ts) => Show (TBAAccountData lq ts) where
+instance (Liquidity lq, Timestamp ts)
+    => Show (TBAAccountData lq ts) where
     show x = printf "{ settledAt = %s, liquidity = %s }" (show $ settledAt x) (show $ liquidity x)
