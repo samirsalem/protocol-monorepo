@@ -2,7 +2,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Superfluid.Agreements.TransferableBalanceAgreement
-    ( TBAAccountData (..)
+    ( TBAAccountData (..) -- FIXME leaky abstraction
     ) where
 
 import           Data.Default

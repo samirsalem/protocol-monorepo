@@ -16,10 +16,9 @@ module Superfluid.Instances.Simple.System
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Class
 import           Data.Default
-import qualified Data.Map                                    as M
+import qualified Data.Map                          as M
 
-import qualified Superfluid.Agreements.ConstantFlowAgreement as CFA
-import qualified Superfluid.System                           as SF
+import qualified Superfluid.System                 as SF
 
 import           Superfluid.Instances.Simple.Types
     ( SimpleAccount
@@ -116,7 +115,7 @@ instance (Monad m) => SF.SuperfluidToken (SimpleTokenStateT m) where
     getFlow a b = getSimpleTokenData >>= \s -> return $
         case M.lookup (show(a)++":"++show(b)) (cfaAgreements s) of
             Just value -> value
-            Nothing    -> CFA.CFAContractData 0 0
+            Nothing    -> def
 
     updateFlow sender receiver newFlowRate t = do
         updates <- SF.updateFlowPure sender receiver newFlowRate t

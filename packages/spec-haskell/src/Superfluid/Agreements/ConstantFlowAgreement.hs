@@ -2,8 +2,8 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Superfluid.Agreements.ConstantFlowAgreement
-    ( CFAContractData (..)
-    , CFAAccountData (..)
+    ( CFAContractData
+    , CFAAccountData
     , updateFlow
     ) where
 
