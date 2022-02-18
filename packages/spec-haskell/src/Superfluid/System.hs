@@ -13,12 +13,13 @@ module Superfluid.System
 
 import           Control.Monad                                      (Monad)
 
-import           Superfluid.Agreements.ConstantFlowAgreement        as CFA
-import           Superfluid.Agreements.TransferableBalanceAgreement as TBA
 import           Superfluid.BaseTypes                               (Address, Liquidity, Timestamp)
 import           Superfluid.Concepts.Account                        (Account)
-import qualified Superfluid.Concepts.Account                        as Account
+import qualified Superfluid.Concepts.Account                        as SF_ACC
 import           Superfluid.Concepts.RealtimeBalance                (RealtimeBalance)
+--
+import           Superfluid.Agreements.ConstantFlowAgreement        as CFA
+import           Superfluid.Agreements.TransferableBalanceAgreement as TBA
 
 
 -- ============================================================================
@@ -36,8 +37,10 @@ class (Liquidity lq, Timestamp ts, RealtimeBalance rtb lq, Address addr, Account
 -- | SuperfluidStorageInstruction Sum Type
 --
 data SuperfluidStorageInstruction lq ts addr where
+    UpdateLiquidity :: (Liquidity lq, Timestamp ts)
+        => (addr, TBA.TBAAccountData lq ts) -> SuperfluidStorageInstruction lq ts addr
     UpdateFlow :: (Liquidity lq, Timestamp ts)
-        => CFA.CFAContractData lq ts -> SuperfluidStorageInstruction lq ts addr
+        => (addr, addr, CFA.CFAContractData lq ts) -> SuperfluidStorageInstruction lq ts addr
     UpdateAccountFlow :: (Liquidity lq, Timestamp ts, Address addr)
         => (addr, CFA.CFAAccountData lq ts) -> SuperfluidStorageInstruction lq ts addr
 
@@ -54,50 +57,58 @@ data SuperfluidStorageInstruction lq ts addr where
 -- * SuperfluidToken provides:
 --   * addressable account,
 --   * and agreement (TBA/CFA/GDA) operations.
--- * To implement agreement write operations, one should use the '*Pure' helper functions which returns storage
---   instructions for you to commit the changSimpleTimestampes.
+-- * Instructions for write operations are executed in `execStorageInstructions`.
 --
 class ( Monad tk
-      , Liquidity (LQ tk)
-      , Timestamp (TS tk)
-      , Address (ADDR tk)
-      , SuperfluidAccount (ACC tk) (LQ tk) (TS tk) (RTB tk)(ADDR tk))
+      , Liquidity (SF_LQ tk)
+      , Timestamp (SF_TS tk)
+      , Address (SF_ADDR tk)
+      , SuperfluidAccount (SF_ACC tk) (SF_LQ tk) (SF_TS tk) (SF_RTB tk)(SF_ADDR tk))
     => SuperfluidToken tk where
 
     -- Associated type families
-    type LQ tk :: *
-    type TS tk :: *
-    type RTB tk :: *
-    type ADDR tk :: *
-    type ACC tk :: *
+    type SF_LQ tk :: *
+    type SF_TS tk :: *
+    type SF_RTB tk :: *
+    type SF_ADDR tk :: *
+    type SF_ACC tk :: *
+
+    execStorageInstructions :: [SuperfluidStorageInstruction (SF_LQ tk) (SF_TS tk) (SF_ADDR tk)] -> tk ()
 
     --
     -- Account operations
     --
-    getAccount :: ADDR tk -> tk (ACC tk)
+    getAccount :: SF_ADDR tk -> tk (SF_ACC tk)
 
-    balanceOf :: ADDR tk -> TS tk -> tk (RTB tk)
+    balanceOf :: SF_ADDR tk -> SF_TS tk -> tk (SF_RTB tk)
     balanceOf addr t = do
         account <- getAccount addr
-        return $ Account.balanceOf account t
+        return $ SF_ACC.balanceOf account t
+
+    --
+    -- TBA functions
+    --
+    mintLiquidity :: SF_ADDR tk -> SF_LQ tk -> tk ()
+    mintLiquidity addr liquidity = do
+        account <- getAccount addr
+        let account' = (TBA.mintLiquidity . getTBAAccountData) account liquidity
+        execStorageInstructions [ UpdateLiquidity (addr, account') ]
 
     --
     -- CFA functions
     --
-    getFlow :: ADDR tk -> ADDR tk -> tk (CFA.CFAContractData (LQ tk) (TS tk))
+    getFlow :: SF_ADDR tk -> SF_ADDR tk -> tk (CFA.CFAContractData (SF_LQ tk) (SF_TS tk))
 
-    updateFlowPure
-        :: ADDR tk -> ADDR tk -> LQ tk -> TS tk
-        -> tk [SuperfluidStorageInstruction (LQ tk) (TS tk) (ADDR tk)]
-    updateFlowPure senderAddr receiverAddr newFlowRate t = do
+    updateFlow :: SF_ADDR tk -> SF_ADDR tk -> SF_LQ tk -> SF_TS tk -> tk ()
+    updateFlow senderAddr receiverAddr newFlowRate t = do
         senderAccount <- getAccount senderAddr
         receiverAccount <- getAccount receiverAddr
         flowACD <- getFlow senderAddr receiverAddr
         let (flowACD', senderFlowAAD', receiverFlowAAD') = CFA.updateFlow
                 (flowACD, (getCFAAccountData senderAccount), (getCFAAccountData receiverAccount))
                 newFlowRate t
-        return [ UpdateFlow flowACD'
-               , UpdateAccountFlow (senderAddr, senderFlowAAD')
-               , UpdateAccountFlow (receiverAddr, receiverFlowAAD')
-               ]
-    updateFlow :: ADDR tk -> ADDR tk -> LQ tk -> TS tk -> tk ()
+        execStorageInstructions
+            [ UpdateFlow (senderAddr, receiverAddr, flowACD')
+            , UpdateAccountFlow (senderAddr, senderFlowAAD')
+            , UpdateAccountFlow (receiverAddr, receiverFlowAAD')
+            ]

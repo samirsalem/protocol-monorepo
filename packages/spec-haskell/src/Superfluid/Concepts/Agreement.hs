@@ -9,8 +9,9 @@ module Superfluid.Concepts.Agreement
     ) where
 
 import           Data.Default
+
 import           Superfluid.BaseTypes                (Liquidity, Timestamp)
-import           Superfluid.Concepts.RealtimeBalance (RealtimeBalance (..))
+import           Superfluid.Concepts.RealtimeBalance (RealtimeBalance)
 
 
 -- | AgreementContractData type class

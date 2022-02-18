@@ -20,21 +20,19 @@ module Superfluid.Instances.Simple.Types
     , SimpleCFAAccountData
     ) where
 
+import           Data.Char
 import           Data.Default
 import           Text.Printf                                        (printf)
 
-import           Superfluid.Agreements.ConstantFlowAgreement        (CFAAccountData, CFAContractData)
-import           Superfluid.Agreements.TransferableBalanceAgreement (TBAAccountData)
 import           Superfluid.BaseTypes                               (Address, Liquidity, Timestamp)
-import           Superfluid.Concepts.Account                        (Account)
-import           Superfluid.Concepts.RealtimeBalance                (RealtimeBalance)
-
-import qualified Superfluid.Agreements.TransferableBalanceAgreement as TBA
-import qualified Superfluid.Concepts.Account                        as Account (Account (..), balanceOf)
+import qualified Superfluid.Concepts.Account                        as ACC
 import           Superfluid.Concepts.Agreement                      (AnyAgreementAccountData (MkAgreementAccountData))
 import qualified Superfluid.Concepts.RealtimeBalance                as RTB
+--
+import           Superfluid.Agreements.ConstantFlowAgreement        (CFAAccountData, CFAContractData)
+import           Superfluid.Agreements.TransferableBalanceAgreement (TBAAccountData)
 
-import           Superfluid.System                                  (SuperfluidAccount (..))
+import qualified Superfluid.System                                  as SF
 
 
 -- ============================================================================
@@ -85,7 +83,7 @@ data SimpleRealtimeBalance = SimpleRealtimeBalance
 instance Default SimpleRealtimeBalance where
     def = SimpleRealtimeBalance { availableBalance = def, deposit = def, owedDeposit = def }
 
-instance RealtimeBalance SimpleRealtimeBalance Wad where
+instance RTB.RealtimeBalance SimpleRealtimeBalance Wad where
     availableBalance = availableBalance
     toBalanceVector x = map (flip id x) [availableBalance, deposit, owedDeposit]
     fromBalanceVector v = if length v == 3
@@ -95,7 +93,7 @@ instance RealtimeBalance SimpleRealtimeBalance Wad where
 
 instance Show SimpleRealtimeBalance where
     show (SimpleRealtimeBalance avb d od) =
-        "RTB("
+        "("
         ++ show avb ++ "@avb, "
         ++ show d ++ "@d, "
         ++ show od ++ "@od"
@@ -107,8 +105,8 @@ instance Show SimpleRealtimeBalance where
 newtype SimpleAddress = SimpleAddress String deriving (Eq, Ord, Address)
 
 -- SimpleAddress public constructor
-createSimpleAddress :: String -> SimpleAddress
-createSimpleAddress = SimpleAddress -- TODO some simple address rules
+createSimpleAddress :: String -> Maybe SimpleAddress
+createSimpleAddress a = if (all isAlpha a) then Just $ SimpleAddress a else Nothing
 
 instance Show SimpleAddress where
     show (SimpleAddress a) = a
@@ -131,26 +129,26 @@ data SimpleAccount = SimpleAccount
     }
 
 -- SimpleAccount public constructor
-createSimpleAccount :: SimpleAddress -> Wad -> SimpleTimestamp -> SimpleAccount
-createSimpleAccount toAddress initBalance t = SimpleAccount
+createSimpleAccount :: SimpleAddress -> SimpleTimestamp -> SimpleAccount
+createSimpleAccount toAddress t = SimpleAccount
     { address = toAddress
     , lastUpdatedAt = t
-    , tba = (def :: SimpleTBAAccountData){ TBA.liquidity = initBalance }
+    , tba = def
     , cfa = def
     }
 
-instance Account SimpleAccount Wad SimpleTimestamp SimpleRealtimeBalance SimpleAddress where
-    address = address
+instance ACC.Account SimpleAccount Wad SimpleTimestamp SimpleRealtimeBalance SimpleAddress where
+    addressOf = address
 
     agreementsOf a =
         [ MkAgreementAccountData $ tba a
         , MkAgreementAccountData $ cfa a
         ]
 
-instance SuperfluidAccount SimpleAccount Wad SimpleTimestamp SimpleRealtimeBalance SimpleAddress where
+instance SF.SuperfluidAccount SimpleAccount Wad SimpleTimestamp SimpleRealtimeBalance SimpleAddress where
     showAt a t =
         "Account @" ++ show(address a) ++
-        "\n  Balance: " ++ show((Account.balanceOf a t) :: SimpleRealtimeBalance) ++
+        "\n  Balance: " ++ show((ACC.balanceOf a t) :: SimpleRealtimeBalance) ++
         "\n  TBA: " ++ show(tba a) ++
         "\n  CFA: " ++ show(cfa a) ++
         "\n  Last Update: " ++ show(lastUpdatedAt a)
@@ -171,4 +169,4 @@ sumAllSimpleAccount :: [SimpleAccount] -> SimpleTimestamp -> SimpleRealtimeBalan
 sumAllSimpleAccount alist t = foldr
     (+)
     (def :: SimpleRealtimeBalance)
-    (map (flip Account.balanceOf t) alist)
+    (map (flip ACC.balanceOf t) alist)

@@ -4,6 +4,7 @@
 module Superfluid.Agreements.ConstantFlowAgreement
     ( CFAContractData
     , CFAAccountData
+    , getNetFlowRate
     , updateFlow
     ) where
 
@@ -59,13 +60,8 @@ instance (Liquidity lq, Timestamp ts)
 -- ============================================================================
 -- CFA Operations
 --
-_updateFlowRate :: (Liquidity lq, Timestamp ts) => CFAAccountData lq ts -> lq -> ts -> CFAAccountData lq ts
-_updateFlowRate CFAAccountData { netFlowRate = r, settledBalance = b_s, settledAt = t_s } r_delta t =
-    CFAAccountData
-        { netFlowRate = r + r_delta
-        , settledBalance = b_s + integralToLiquidity(t - t_s) * r
-        , settledAt = t
-        }
+getNetFlowRate :: (Liquidity lq, Timestamp ts) => CFAAccountData lq ts -> lq
+getNetFlowRate = netFlowRate
 
 updateFlow :: (Liquidity lq, Timestamp ts)
     => (CFAContractData lq ts, CFAAccountData lq ts, CFAAccountData lq ts) -- (cfaACD, senderAAD, receiverAAD)
@@ -76,7 +72,14 @@ updateFlow (cfaACD, senderAAD, receiverAAD) newFlowRate t =
         { flowLastUpdatedAt = t
         , flowRate = newFlowRate
         }
-    , _updateFlowRate senderAAD (negate flowRateDelta) t
-    , _updateFlowRate receiverAAD flowRateDelta t
+    , updateFlowRate senderAAD (negate flowRateDelta) t
+    , updateFlowRate receiverAAD flowRateDelta t
     )
-    where flowRateDelta = newFlowRate - (flowRate cfaACD)
+    where
+        flowRateDelta = newFlowRate - (flowRate cfaACD)
+        updateFlowRate CFAAccountData { netFlowRate = r, settledBalance = b_s, settledAt = t_s } r_delta t_s' =
+            CFAAccountData
+                { netFlowRate = r + r_delta
+                , settledBalance = b_s + integralToLiquidity(t - t_s) * r
+                , settledAt = t_s'
+                }

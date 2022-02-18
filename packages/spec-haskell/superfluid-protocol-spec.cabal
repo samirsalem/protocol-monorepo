@@ -62,7 +62,6 @@ executable superfluid-protocol-validator
         time,
         containers,
         transformers,
-        core,
         simple
 
 test-suite test

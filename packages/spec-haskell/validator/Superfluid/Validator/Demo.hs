@@ -1,9 +1,9 @@
 module Superfluid.Validator.Demo (demo) where
 
 import           Control.Monad.IO.Class
+import           Data.Maybe
 
-import qualified Superfluid.System                 as SF
-
+import qualified Superfluid.Instances.Simple.System as SF
 import           Superfluid.Instances.Simple.Types
     ( SimpleAccount
     , SimpleAddress
@@ -16,8 +16,7 @@ import           Superfluid.Instances.Simple.Types
 import           Superfluid.Validator.Simulation
 
 createTestAccount :: SimpleAddress -> SimpleTimestamp -> SimpleAccount
-createTestAccount a t = createSimpleAccount a b t
-    where b = toWad (100.0 :: Double)
+createTestAccount a t = createSimpleAccount a t -- where b = toWad (100.0 :: Double)
 
 demo :: SimMonad ()
 demo = do
@@ -26,11 +25,12 @@ demo = do
     liftIO $ putStrLn $ "# T0: initial state"
 
     let t1 = t0
-    let alice = createSimpleAddress "alice"
-    let bob = createSimpleAddress "bob"
-    let carol = createSimpleAddress "carol"
+    let alice = fromJust $ createSimpleAddress "alice"
+    let bob = fromJust $ createSimpleAddress "bob"
+    let carol = fromJust $ createSimpleAddress "carol"
+    let accounts = map (\a -> (a, createTestAccount a t1)) [alice, bob, carol]
     liftIO $ putStrLn $ "# T1: create test accounts & flows" ++ (show (t1 - t0))
-    createToken token $ (map (\a -> (a, createTestAccount a t1)) [alice, bob, carol])
+    createToken token $ accounts
     runTokenMonad token $ SF.updateFlow alice bob (toWad (0.0001::Double)) t1
     runTokenMonad token $ SF.updateFlow alice carol (toWad (0.0002::Double)) t1
     runTokenMonadWithSimData token printTokenState

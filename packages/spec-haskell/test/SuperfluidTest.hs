@@ -1,11 +1,10 @@
 module SuperfluidTest where
 
 import           Control.Monad.IO.Class
+import           Data.Maybe
 import           Test.HUnit
 
-import qualified Superfluid.System                  as SF
-
-import           Superfluid.Instances.Simple.System (addAccount, listAccounts)
+import qualified Superfluid.Instances.Simple.System as SF
 import           Superfluid.Instances.Simple.Types  (createSimpleAddress, toWad)
 
 import           Utils
@@ -15,9 +14,9 @@ simple1to1ScenarioTest :: SimpleTokenTest ()
 simple1to1ScenarioTest = do
     -- T0: test initial condition
     let t0 = 0
-    let alice = createSimpleAddress "alice"
-    let bob = createSimpleAddress "bob"
-    let carol = createSimpleAddress "carol"
+    let alice = fromJust $ createSimpleAddress "alice"
+    let bob = fromJust $ createSimpleAddress "bob"
+    let carol = fromJust $ createSimpleAddress "carol"
     expectAccountBalanceTo "alice should have no money" alice (== zeroWad) t0
     expectAccountBalanceTo "bob should have no money" bob (== zeroWad) t0
     expectAccountBalanceTo "carol should have no money" carol (== zeroWad) t0
@@ -25,13 +24,13 @@ simple1to1ScenarioTest = do
     expectCFANetFlowRateTo "bob should have no flow" bob (== zeroWad)
     expectCFANetFlowRateTo "carol should have no flow" carol (== zeroWad)
     expeceTotalBalanceTo "total balance zero" (== zeroWad) t0
-    accounts <- listAccounts
+    accounts <- SF.listAccounts
     liftIO $ assertEqual "expected zero account" 0 (length accounts)
     -- creating test accounts
-    addAccount alice (createTestAccount alice t0)
-    addAccount bob (createTestAccount bob t0)
-    addAccount carol (createTestAccount carol t0)
-    accounts' <- listAccounts
+    SF.addAccount alice (createTestAccount alice t0)
+    SF.addAccount bob (createTestAccount bob t0)
+    SF.addAccount carol (createTestAccount carol t0)
+    accounts' <- SF.listAccounts
     liftIO $ assertEqual "expected number of accounts" 3 (length accounts')
     expeceTotalBalanceTo "total balance zero" (== 3 * initBalance) t0
     -- creating flow: alice -> bob @ 0.0001/s
@@ -51,13 +50,13 @@ simple1to2ScenarioTest :: SimpleTokenTest ()
 simple1to2ScenarioTest = do
     -- T0: test initial condition
     let t0 = 0
-    let alice = createSimpleAddress "alice"
-    let bob = createSimpleAddress "bob"
-    let carol = createSimpleAddress "carol"
+    let alice = fromJust $ createSimpleAddress "alice"
+    let bob = fromJust $ createSimpleAddress "bob"
+    let carol = fromJust $ createSimpleAddress "carol"
     -- creating test accounts & flows: alice -> bob @ 0.0001/s & alice -> carol @ 0.0001/s
-    addAccount alice (createTestAccount alice t0)
-    addAccount bob (createTestAccount bob t0)
-    addAccount carol (createTestAccount carol t0)
+    SF.addAccount alice (createTestAccount alice t0)
+    SF.addAccount bob (createTestAccount bob t0)
+    SF.addAccount carol (createTestAccount carol t0)
     SF.updateFlow alice bob (toWad (0.0001 :: Double)) t0
     SF.updateFlow alice carol (toWad (0.0001 :: Double)) t0
     expectCFANetFlowRateTo "alice should have -2x net flowrate" alice (== toWad(-0.0002 :: Double))

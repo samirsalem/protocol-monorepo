@@ -15,13 +15,13 @@ import           Superfluid.Concepts.RealtimeBalance (RealtimeBalance, liquidity
 --
 -- Naming conventions:
 --   * Type name: acc
---   * Type family name: ACC
+--   * Type family name: SF_ACC
 --   * Term name: *Account
 class (Liquidity lq, Timestamp ts, RealtimeBalance rtb lq, Address addr)
     => Account acc lq ts rtb addr
     | acc -> lq, acc -> ts, acc -> addr, acc -> rtb where
 
-    address :: acc -> addr
+    addressOf :: acc -> addr
 
     -- TODO return type polymorphism
     -- getAgreement :: (AgreementAccountData aad lq ts) => acc -> aad

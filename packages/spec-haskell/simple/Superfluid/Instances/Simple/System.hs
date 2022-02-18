@@ -5,6 +5,8 @@
 module Superfluid.Instances.Simple.System
     ( SimpleTokenData
     , SimpleTokenStateT
+    , SF.SuperfluidAccount (..)
+    , SF.SuperfluidToken (..)
     , initSimpleToken
     , addAccount
     , listAccounts
@@ -18,8 +20,6 @@ import           Control.Monad.Trans.Class
 import           Data.Default
 import qualified Data.Map                          as M
 
-import qualified Superfluid.System                 as SF
-
 import           Superfluid.Instances.Simple.Types
     ( SimpleAccount
     , SimpleAddress
@@ -28,8 +28,9 @@ import           Superfluid.Instances.Simple.Types
     , SimpleTimestamp
     , Wad
     , createSimpleAccount
-    , toWad
     )
+
+import qualified Superfluid.System                 as SF
 
 
 -- ============================================================================
@@ -101,41 +102,47 @@ initSimpleToken alist = putSimpleTokenData SimpleTokenData
 --
 instance (Monad m) => SF.SuperfluidToken (SimpleTokenStateT m) where
 
-    type LQ (SimpleTokenStateT m) = Wad
-    type TS (SimpleTokenStateT m) = SimpleTimestamp
-    type RTB (SimpleTokenStateT m) = SimpleRealtimeBalance
-    type ADDR (SimpleTokenStateT m) = SimpleAddress
-    type ACC (SimpleTokenStateT m) = SimpleAccount
+    type SF_LQ (SimpleTokenStateT m) = Wad
+    type SF_TS (SimpleTokenStateT m) = SimpleTimestamp
+    type SF_RTB (SimpleTokenStateT m) = SimpleRealtimeBalance
+    type SF_ADDR (SimpleTokenStateT m) = SimpleAddress
+    type SF_ACC (SimpleTokenStateT m) = SimpleAccount
+
+    execStorageInstructions = mapM_ (\u -> case u of
+        SF.UpdateLiquidity (addr, tbaLiquidity) -> do
+            account <- SF.getAccount addr
+            modifySimpleTokenData (\vs -> vs {
+                accounts = M.insert
+                    addr
+                    (SF.updateTBAAccountData account tbaLiquidity)
+                    (accounts vs)
+            })
+        SF.UpdateFlow (sender, receiver, flow) -> do
+            modifySimpleTokenData (\vs -> vs {
+                cfaAgreements = M.insert
+                    (show(sender)++":"++show(receiver))
+                    flow
+                    (cfaAgreements vs)
+            })
+        SF.UpdateAccountFlow (addr, accountFlow) -> do
+            account <- SF.getAccount addr
+            modifySimpleTokenData (\vs -> vs {
+                accounts = M.insert
+                    addr
+                    (SF.updateCFAAccountData account accountFlow)
+                    (accounts vs)
+            })
+        )
 
     getAccount a = getSimpleTokenData >>= \s -> return $
         case M.lookup a (accounts s) of
             Just value -> value
-            Nothing    -> createSimpleAccount a (toWad (0 :: Double)) 0
+            Nothing    -> createSimpleAccount a 0
 
     getFlow a b = getSimpleTokenData >>= \s -> return $
         case M.lookup (show(a)++":"++show(b)) (cfaAgreements s) of
             Just value -> value
             Nothing    -> def
-
-    updateFlow sender receiver newFlowRate t = do
-        updates <- SF.updateFlowPure sender receiver newFlowRate t
-        mapM_ (\u -> case u of
-            SF.UpdateFlow flow' -> do
-                modifySimpleTokenData (\vs -> vs {
-                    cfaAgreements = M.insert
-                        (show(sender)++":"++show(receiver))
-                        flow'
-                        (cfaAgreements vs)
-                })
-            SF.UpdateAccountFlow (accountAddr, accountFlow') -> do
-                account <- SF.getAccount accountAddr
-                modifySimpleTokenData (\vs -> vs {
-                    accounts = M.insert
-                        accountAddr
-                        (SF.updateCFAAccountData account accountFlow')
-                        (accounts vs)
-                })
-            ) updates
 
 -- | Other SimpleTokenStateT Operations
 --

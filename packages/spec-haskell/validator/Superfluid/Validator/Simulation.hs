@@ -19,17 +19,10 @@ import           Control.Monad.IO.Class
 import           Control.Monad.Trans.State
 import           Data.Default
 import qualified Data.Map                           as M
+import           Data.Maybe
 import           GHC.Stack
 
-import qualified Superfluid.System                  as SF
-
-import           Superfluid.Instances.Simple.System
-    ( SimpleTokenData
-    , SimpleTokenStateT
-    , initSimpleToken
-    , listAccounts
-    , runSimpleTokenStateT
-    )
+import qualified Superfluid.Instances.Simple.System as SF
 import           Superfluid.Instances.Simple.Types
     ( SimpleAccount
     , SimpleAddress
@@ -39,7 +32,6 @@ import           Superfluid.Instances.Simple.Types
     , sumAllSimpleAccount
     )
 
-
 -- ============================================================================
 -- | Simulation Monad Stacks
 --
@@ -47,11 +39,11 @@ import           Superfluid.Instances.Simple.Types
 --   TokenMonad  : SimpleTokenState | IO
 data SimData = SimData
     { currentTime :: SimpleTimestamp
-    , tokens      :: M.Map String SimpleTokenData
+    , tokens      :: M.Map String SF.SimpleTokenData
     }
 type SimMonad = StateT SimData IO
 
-type TokenMonad = SimpleTokenStateT IO
+type TokenMonad = SF.SimpleTokenStateT IO
 
 runSimMonad :: SimpleTimestamp -> SimMonad () -> IO ()
 runSimMonad t = flip evalStateT SimData { currentTime = t, tokens = def }
@@ -75,7 +67,7 @@ runTokenMonadWithSimData :: HasCallStack => String -> (SimData -> TokenMonad a) 
 runTokenMonadWithSimData tokenId mf = do
     s <- get
     (a, token') <- case M.lookup tokenId (tokens s) of
-                        Just token -> liftIO $ runSimpleTokenStateT (mf s) token
+                        Just token -> liftIO $ SF.runSimpleTokenStateT (mf s) token
                         Nothing    -> error $ "No such tokenId: " ++ tokenId
     put s { tokens = M.insert tokenId token' (tokens s) }
     return a
@@ -86,13 +78,13 @@ runTokenMonad tokenId m = runTokenMonadWithSimData tokenId (const m)
 createToken :: HasCallStack => String -> [(SimpleAddress, SimpleAccount)] -> SimMonad ()
 createToken tokenId alist = do
     modify (\vs -> vs { tokens = M.insert tokenId def (tokens vs) })
-    runTokenMonad tokenId $ initSimpleToken alist
+    runTokenMonad tokenId $ SF.initSimpleToken alist
 
 -- ============================================================================
 -- | TokenMonad Operations
 --
 getAccountByAlias :: HasCallStack => String -> SimData -> TokenMonad SimpleAccount
-getAccountByAlias alias _= SF.getAccount $ createSimpleAddress alias
+getAccountByAlias alias _= SF.getAccount $ fromJust $ createSimpleAddress alias
 
 printAccount :: HasCallStack => SimpleAccount -> SimData -> TokenMonad ()
 printAccount acc s = do
@@ -103,7 +95,7 @@ printAccountByAlias alias s = getAccountByAlias alias s >>= flip printAccount s
 
 sumTotalLiquidity :: HasCallStack => SimData -> TokenMonad SimpleRealtimeBalance
 sumTotalLiquidity s = do
-    accounts <- listAccounts
+    accounts <- SF.listAccounts
     return $ sumAllSimpleAccount (map snd accounts) (currentTime s)
 
 printTokenState :: HasCallStack => SimData -> TokenMonad ()
@@ -111,7 +103,7 @@ printTokenState s = do
     let banner = 60 `replicate` '='
     liftIO $ putStrLn banner
     liftIO $ putStrLn $ "## Accounts\n"
-    accounts <- listAccounts
+    accounts <- SF.listAccounts
     mapM_ (flip (printAccount . snd) s) accounts
     totalLiquidtySum <- sumTotalLiquidity s
     liftIO $ putStrLn $ "## Token Info\n"
