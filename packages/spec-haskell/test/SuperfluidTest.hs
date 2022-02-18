@@ -13,62 +13,62 @@ import           Utils
 simple1to1ScenarioTest :: SimpleTokenTest ()
 simple1to1ScenarioTest = do
     -- T0: test initial condition
-    let t0 = 0
+    _ <- SF.getCurrentTime
     let alice = fromJust $ createSimpleAddress "alice"
     let bob = fromJust $ createSimpleAddress "bob"
     let carol = fromJust $ createSimpleAddress "carol"
-    expectAccountBalanceTo "alice should have no money" alice (== zeroWad) t0
-    expectAccountBalanceTo "bob should have no money" bob (== zeroWad) t0
-    expectAccountBalanceTo "carol should have no money" carol (== zeroWad) t0
-    expectCFANetFlowRateTo "alice should have no flow" alice (== zeroWad)
-    expectCFANetFlowRateTo "bob should have no flow" bob (== zeroWad)
-    expectCFANetFlowRateTo "carol should have no flow" carol (== zeroWad)
-    expeceTotalBalanceTo "total balance zero" (== zeroWad) t0
+    expectAccountBalanceTo "alice should have no money" alice (== cZERO_WAD)
+    expectAccountBalanceTo "bob should have no money" bob (== cZERO_WAD)
+    expectAccountBalanceTo "carol should have no money" carol (== cZERO_WAD)
+    expectCFANetFlowRateTo "alice should have no flow" alice (== cZERO_WAD)
+    expectCFANetFlowRateTo "bob should have no flow" bob (== cZERO_WAD)
+    expectCFANetFlowRateTo "carol should have no flow" carol (== cZERO_WAD)
+    expeceTotalBalanceTo "total balance zero" (== cZERO_WAD)
     accounts <- SF.listAccounts
     liftIO $ assertEqual "expected zero account" 0 (length accounts)
     -- creating test accounts
-    SF.addAccount alice (createTestAccount alice t0)
-    SF.addAccount bob (createTestAccount bob t0)
-    SF.addAccount carol (createTestAccount carol t0)
+    SF.addAccount alice =<< createTestAccount alice
+    SF.addAccount bob =<< createTestAccount bob
+    SF.addAccount carol =<< createTestAccount carol
     accounts' <- SF.listAccounts
     liftIO $ assertEqual "expected number of accounts" 3 (length accounts')
-    expeceTotalBalanceTo "total balance zero" (== 3 * initBalance) t0
+    expeceTotalBalanceTo "total balance 3 x cINIT_BALANCE" (== 3 * cINIT_BALANCE)
     -- creating flow: alice -> bob @ 0.0001/s
-    SF.updateFlow alice bob (toWad (0.0001 :: Double)) t0
+    SF.updateFlow alice bob (toWad (0.0001 :: Double))
     expectCFANetFlowRateTo "alice should have -1x net flowrate" alice (== toWad(-0.0001 :: Double))
     expectCFANetFlowRateTo "alice should have 1x net flowrate" bob (== toWad(0.0001 :: Double))
     expectCFANetFlowRateTo "alice should have zero net flowrate" carol (== toWad(0.0000 :: Double))
 
     -- T1: move time forward and test balance moves
-    let t1 = t0 + 3600 * 24
-    expectAccountBalanceTo "alice should send money" alice (< initBalance) t1
-    expectAccountBalanceTo "bob should receive money" bob (> initBalance) t1
-    expectAccountBalanceTo "carol should be the same" carol (== initBalance) t1
-    expeceTotalBalanceTo "total balance stays the same" (== 3 * initBalance) t1
+    _ <- SF.timeTravel $ 3600 * 24
+    expectAccountBalanceTo "alice should send money" alice (< cINIT_BALANCE)
+    expectAccountBalanceTo "bob should receive money" bob (> cINIT_BALANCE)
+    expectAccountBalanceTo "carol should be the same" carol (== cINIT_BALANCE)
+    expeceTotalBalanceTo "total balance stays the same" (== 3 * cINIT_BALANCE)
 
 simple1to2ScenarioTest :: SimpleTokenTest ()
 simple1to2ScenarioTest = do
     -- T0: test initial condition
-    let t0 = 0
+    -- t0 <- SF.getCurrentTime
     let alice = fromJust $ createSimpleAddress "alice"
     let bob = fromJust $ createSimpleAddress "bob"
     let carol = fromJust $ createSimpleAddress "carol"
     -- creating test accounts & flows: alice -> bob @ 0.0001/s & alice -> carol @ 0.0001/s
-    SF.addAccount alice (createTestAccount alice t0)
-    SF.addAccount bob (createTestAccount bob t0)
-    SF.addAccount carol (createTestAccount carol t0)
-    SF.updateFlow alice bob (toWad (0.0001 :: Double)) t0
-    SF.updateFlow alice carol (toWad (0.0001 :: Double)) t0
+    SF.addAccount alice =<< createTestAccount alice
+    SF.addAccount bob =<< createTestAccount bob
+    SF.addAccount carol =<< createTestAccount carol
+    SF.updateFlow alice bob (toWad (0.0001 :: Double))
+    SF.updateFlow alice carol (toWad (0.0001 :: Double))
     expectCFANetFlowRateTo "alice should have -2x net flowrate" alice (== toWad(-0.0002 :: Double))
     expectCFANetFlowRateTo "alice should have 1x net flowrate" bob (== toWad(0.0001 :: Double))
     expectCFANetFlowRateTo "alice should have 1x net flowrate" carol (== toWad(0.0001 :: Double))
 
     -- T1: move time forward and test balance moves
-    let t1 = t0 + 3600 * 24
-    expectAccountBalanceTo "alice should send money" alice (< initBalance) t1
-    expectAccountBalanceTo "bob should receive money" bob (> initBalance) t1
-    expectAccountBalanceTo "carol should also receive money" carol (> initBalance) t1
-    expeceTotalBalanceTo "total balance stays the same" (== 3 * initBalance) t1
+    _ <- SF.timeTravel $ 3600 * 24
+    expectAccountBalanceTo "alice should send money" alice (< cINIT_BALANCE)
+    expectAccountBalanceTo "bob should receive money" bob (> cINIT_BALANCE)
+    expectAccountBalanceTo "carol should also receive money" carol (> cINIT_BALANCE)
+    expeceTotalBalanceTo "total balance stays the same" (== 3 * cINIT_BALANCE)
 
 tests :: Test
 tests = TestList $ map (uncurry createSimpleTokenTestCase)

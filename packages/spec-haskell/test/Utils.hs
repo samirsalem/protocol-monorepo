@@ -1,20 +1,16 @@
 module Utils where
 
 import           Control.Monad.IO.Class
-import           Data.Default
 import           Test.HUnit
 
 import qualified Superfluid.Agreements.ConstantFlowAgreement as CFA
-import qualified Superfluid.Concepts.Account                 as ACC
 import qualified Superfluid.Concepts.RealtimeBalance         as RTB
 
 import qualified Superfluid.Instances.Simple.System          as SF
 import           Superfluid.Instances.Simple.Types
     ( SimpleAccount
     , SimpleAddress
-    , SimpleTimestamp
     , Wad
-    , createSimpleAccount
     , sumAllSimpleAccount
     , toWad
     )
@@ -22,26 +18,29 @@ import           Superfluid.Instances.Simple.Types
 
 type SimpleTokenTest = SF.SimpleTokenStateT IO
 
-zeroWad :: Wad
-zeroWad = toWad (0 :: Double)
+cZERO_WAD :: Wad
+cZERO_WAD = toWad (0 :: Double)
 
-initBalance :: Wad
-initBalance = toWad (100.0 :: Double)
-
-createTestAccount :: SimpleAddress -> SimpleTimestamp -> SimpleAccount
-createTestAccount a t = createSimpleAccount a t
+cINIT_BALANCE :: Wad
+cINIT_BALANCE = toWad (100.0 :: Double)
 
 createSimpleTokenTestCase :: String -> SimpleTokenTest () -> Test
-createSimpleTokenTestCase label testCase =
-    TestLabel label $ TestCase $ SF.evalSimpleTokenStateT testCase def
+createSimpleTokenTestCase label testCase = TestLabel label $ TestCase $
+    SF.evalSimpleTokenStateT testCase (SF.createSimpleToken 0 [])
 
-expectAccountBalanceTo :: String -> SimpleAddress -> (Wad -> Bool) -> SimpleTimestamp -> SimpleTokenTest ()
-expectAccountBalanceTo label addr expr t = do
-    account <- SF.getAccount addr
-    liftIO $ assertBool label (expr . RTB.liquidityFromRTB $ ACC.balanceOf account t)
+createTestAccount :: SimpleAddress -> SimpleTokenTest SimpleAccount
+createTestAccount a = do
+    SF.mintLiquidity a cINIT_BALANCE
+    SF.getAccount a
 
-expeceTotalBalanceTo :: String -> (Wad -> Bool) -> SimpleTimestamp -> SimpleTokenTest ()
-expeceTotalBalanceTo label expr t = do
+expectAccountBalanceTo :: String -> SimpleAddress -> (Wad -> Bool) -> SimpleTokenTest ()
+expectAccountBalanceTo label addr expr = do
+    balance <- SF.balanceOf addr
+    liftIO $ assertBool label (expr . RTB.liquidityFromRTB $ balance)
+
+expeceTotalBalanceTo :: String -> (Wad -> Bool) -> SimpleTokenTest ()
+expeceTotalBalanceTo label expr = do
+    t <- SF.getCurrentTime
     accounts <- SF.listAccounts
     liftIO $ assertBool label (expr . RTB.availableBalance $ sumAllSimpleAccount (map snd accounts) t)
 

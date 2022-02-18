@@ -29,9 +29,9 @@ class (Liquidity lq, Timestamp ts, RealtimeBalance rtb lq, Address addr, Account
     => SuperfluidAccount acc lq ts rtb addr where
     showAt :: acc -> ts -> String
     getTBAAccountData :: acc -> TBA.TBAAccountData lq ts
-    updateTBAAccountData :: acc -> TBA.TBAAccountData lq ts -> acc
+    updateTBAAccountData :: acc -> ts -> TBA.TBAAccountData lq ts -> acc
     getCFAAccountData :: acc -> CFA.CFAAccountData lq ts
-    updateCFAAccountData :: acc -> CFA.CFAAccountData lq ts -> acc
+    updateCFAAccountData :: acc -> ts -> CFA.CFAAccountData lq ts -> acc
 
 -- ============================================================================
 -- | SuperfluidStorageInstruction Sum Type
@@ -73,41 +73,49 @@ class ( Monad tk
     type SF_ADDR tk :: *
     type SF_ACC tk :: *
 
-    execStorageInstructions :: [SuperfluidStorageInstruction (SF_LQ tk) (SF_TS tk) (SF_ADDR tk)] -> tk ()
+    --
+    -- System operations
+    --
+    getCurrentTime :: tk (SF_TS tk)
+
+    execStorageInstructions :: SF_TS tk -> [SuperfluidStorageInstruction (SF_LQ tk) (SF_TS tk) (SF_ADDR tk)] -> tk ()
 
     --
     -- Account operations
     --
     getAccount :: SF_ADDR tk -> tk (SF_ACC tk)
 
-    balanceOf :: SF_ADDR tk -> SF_TS tk -> tk (SF_RTB tk)
-    balanceOf addr t = do
+    balanceOf :: SF_ADDR tk -> tk (SF_RTB tk)
+    balanceOf addr = do
+        t <- getCurrentTime
         account <- getAccount addr
-        return $ SF_ACC.balanceOf account t
+        return $ SF_ACC.balanceOfAt account t
 
     --
     -- TBA functions
     --
     mintLiquidity :: SF_ADDR tk -> SF_LQ tk -> tk ()
     mintLiquidity addr liquidity = do
+        t <- getCurrentTime
         account <- getAccount addr
         let account' = (TBA.mintLiquidity . getTBAAccountData) account liquidity
-        execStorageInstructions [ UpdateLiquidity (addr, account') ]
+        execStorageInstructions t [ UpdateLiquidity (addr, account') ]
 
     --
     -- CFA functions
     --
     getFlow :: SF_ADDR tk -> SF_ADDR tk -> tk (CFA.CFAContractData (SF_LQ tk) (SF_TS tk))
 
-    updateFlow :: SF_ADDR tk -> SF_ADDR tk -> SF_LQ tk -> SF_TS tk -> tk ()
-    updateFlow senderAddr receiverAddr newFlowRate t = do
+    updateFlow :: SF_ADDR tk -> SF_ADDR tk -> SF_LQ tk -> tk ()
+    updateFlow senderAddr receiverAddr newFlowRate = do
+        t <- getCurrentTime
         senderAccount <- getAccount senderAddr
         receiverAccount <- getAccount receiverAddr
         flowACD <- getFlow senderAddr receiverAddr
         let (flowACD', senderFlowAAD', receiverFlowAAD') = CFA.updateFlow
                 (flowACD, (getCFAAccountData senderAccount), (getCFAAccountData receiverAccount))
                 newFlowRate t
-        execStorageInstructions
+        execStorageInstructions t
             [ UpdateFlow (senderAddr, receiverAddr, flowACD')
             , UpdateAccountFlow (senderAddr, senderFlowAAD')
             , UpdateAccountFlow (receiverAddr, receiverFlowAAD')

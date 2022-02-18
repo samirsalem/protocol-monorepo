@@ -148,25 +148,25 @@ instance ACC.Account SimpleAccount Wad SimpleTimestamp SimpleRealtimeBalance Sim
 instance SF.SuperfluidAccount SimpleAccount Wad SimpleTimestamp SimpleRealtimeBalance SimpleAddress where
     showAt a t =
         "Account @" ++ show(address a) ++
-        "\n  Balance: " ++ show((ACC.balanceOf a t) :: SimpleRealtimeBalance) ++
+        "\n  Balance: " ++ show((ACC.balanceOfAt a t) :: SimpleRealtimeBalance) ++
         "\n  TBA: " ++ show(tba a) ++
         "\n  CFA: " ++ show(cfa a) ++
         "\n  Last Update: " ++ show(lastUpdatedAt a)
 
-    getTBAAccountData :: SimpleAccount -> SimpleTBAAccountData
+    -- getTBAAccountData :: SimpleAccount -> SimpleTBAAccountData
     getTBAAccountData = tba
 
-    updateTBAAccountData :: SimpleAccount -> SimpleTBAAccountData -> SimpleAccount
-    updateTBAAccountData acc tba' = acc { tba = tba' }
+    -- updateTBAAccountData :: SimpleAccount -> SimpleTimestamp -> SimpleTBAAccountData -> SimpleAccount
+    updateTBAAccountData acc t' tba' = acc { tba = tba', lastUpdatedAt = t' }
 
-    getCFAAccountData :: SimpleAccount -> SimpleCFAAccountData
+    -- getCFAAccountData :: SimpleAccount -> SimpleCFAAccountData
     getCFAAccountData = cfa
 
-    updateCFAAccountData :: SimpleAccount -> SimpleCFAAccountData -> SimpleAccount
-    updateCFAAccountData acc cfa' = acc { cfa = cfa' }
+    -- updateCFAAccountData :: SimpleAccount -> SimpleTimestamp -> SimpleCFAAccountData -> SimpleAccount
+    updateCFAAccountData acc t' cfa' = acc { cfa = cfa', lastUpdatedAt = t' }
 
 sumAllSimpleAccount :: [SimpleAccount] -> SimpleTimestamp -> SimpleRealtimeBalance
 sumAllSimpleAccount alist t = foldr
     (+)
     (def :: SimpleRealtimeBalance)
-    (map (flip ACC.balanceOf t) alist)
+    (map (flip ACC.balanceOfAt t) alist)

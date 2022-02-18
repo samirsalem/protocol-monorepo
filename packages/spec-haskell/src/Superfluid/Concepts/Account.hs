@@ -28,8 +28,8 @@ class (Liquidity lq, Timestamp ts, RealtimeBalance rtb lq, Address addr)
 
     agreementsOf :: acc -> [AnyAgreementAccountData lq ts rtb]
 
-    balanceOf :: acc -> ts -> rtb
-    balanceOf holderAccount t = foldr
+    balanceOfAt :: acc -> ts -> rtb
+    balanceOfAt holderAccount t = foldr
         (+)
         (liquidityToRTB . fromInteger $ 0)
         (map (flip providedBalanceOfAnyAgreement t) (agreementsOf holderAccount))
