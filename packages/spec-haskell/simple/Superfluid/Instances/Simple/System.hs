@@ -1,25 +1,28 @@
-{-# LANGUAGE FlexibleContexts  #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE TypeFamilies               #-}
 
 module Superfluid.Instances.Simple.System
-    ( SimpleTokenData
+    ( SimpleSystemData (..)
+    , SimpleTokenData
     , SimpleTokenStateT
     , runSimpleTokenStateT
     , evalSimpleTokenStateT
-    , withSimpleTokenStateT
+    , execSimpleTokenStateT
     , getSimpleTokenData
     , SF.SuperfluidAccount (..)
     , SF.SuperfluidToken (..)
-    , createSimpleToken
     , initSimpleToken
-    , timeTravel
     , addAccount
-    , listAccounts)
+    , listAccounts
+    , ACC.sumAccounts)
     where
 
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Class
+import           Control.Monad.Trans.Reader
+import           Control.Monad.Trans.State
 import           Data.Default
 import qualified Data.Map                          as M
 
@@ -33,65 +36,62 @@ import           Superfluid.Instances.Simple.Types
     , createSimpleAccount
     )
 
+import qualified Superfluid.Concepts.Account       as ACC
 import qualified Superfluid.System                 as SF
 
+
+data SimpleSystemData = SimpleSystemData
+    { currentTime   :: SimpleTimestamp
+    }
 
 -- ============================================================================
 -- | SimpleTokenData Type
 --
 data SimpleTokenData = SimpleTokenData
-    { currentTime   :: SimpleTimestamp
-    , accounts      :: M.Map SimpleAddress SimpleAccount
+    { accounts      :: M.Map SimpleAddress SimpleAccount
     , cfaAgreements :: M.Map String SimpleCFAContractData
     }
+instance Default SimpleTokenData where
+    def = SimpleTokenData { accounts = def, cfaAgreements = def }
 
 -- ============================================================================
--- | SimpleTokenStateT Type is a MonadTrans instance
---
+-- | Simple Monad Transformer stack
+newtype SimpleSystemStateT m a = SimpleSystemStateT (ReaderT SimpleSystemData m a)
+    deriving (Functor, Applicative, Monad, MonadTrans, MonadIO)
 newtype SimpleTokenStateT m a = SimpleTokenStateT
-    { runSimpleTokenStateT :: SimpleTokenData -> m (a, SimpleTokenData) }
-
--- FIXME can we derive all these boilerplate instead?
-instance (Monad m) => Functor (SimpleTokenStateT m) where
-    fmap f m = SimpleTokenStateT $ \ s ->
-        fmap (\ ~(a, s') -> (f a, s')) $ runSimpleTokenStateT m s
-
-instance (Monad m) => Applicative (SimpleTokenStateT m) where
-    pure a = SimpleTokenStateT $ \ s -> return (a, s)
-    SimpleTokenStateT mf <*> SimpleTokenStateT mx = SimpleTokenStateT $ \ s -> do
-        ~(f, s') <- mf s
-        ~(x, s'') <- mx s'
-        return (f x, s'')
-
-instance (Monad m) => Monad (SimpleTokenStateT m) where
-    m >>= k = SimpleTokenStateT $ \s -> do
-        ~(a, s') <- runSimpleTokenStateT m s
-        runSimpleTokenStateT (k a) s'
-
-instance (MonadIO m) => MonadIO (SimpleTokenStateT m) where
-    liftIO = lift . liftIO
-
+    ( StateT SimpleTokenData
+    ( SimpleSystemStateT m )
+    a ) deriving (Functor, Applicative, Monad, MonadIO)
 instance MonadTrans SimpleTokenStateT where
-    lift c = SimpleTokenStateT $ \s -> c >>= (\x -> return (x, s))
+    lift m = SimpleTokenStateT $ StateT $ \s -> (lift m) >>= \a -> return (a, s)
+
+getSystemData :: (Monad m) => SimpleTokenStateT m SimpleSystemData
+getSystemData = SimpleTokenStateT . lift . SimpleSystemStateT $ ask
+
+getSimpleTokenData :: (Monad m) => SimpleTokenStateT m SimpleTokenData
+getSimpleTokenData = SimpleTokenStateT $ get
+
+runSimpleTokenStateT :: (Monad m)
+    => SimpleTokenStateT m a -> SimpleSystemData -> SimpleTokenData -> m (a, SimpleTokenData)
+runSimpleTokenStateT (SimpleTokenStateT m) sys token = m'' where
+        (SimpleSystemStateT m') = runStateT m token
+        m'' = runReaderT m' sys
 
 evalSimpleTokenStateT :: (Monad m)
-    => SimpleTokenStateT m a -> SimpleTokenData -> m a
-evalSimpleTokenStateT m s = runSimpleTokenStateT m s >>= return . fst
+    => SimpleTokenStateT m a -> SimpleSystemData -> SimpleTokenData -> m a
+evalSimpleTokenStateT m sys token = runSimpleTokenStateT m sys token >>= return . fst
 
-withSimpleTokenStateT :: (Monad m)
-    => (SimpleTokenData -> SimpleTokenData) -> SimpleTokenStateT m a -> SimpleTokenStateT m a
-withSimpleTokenStateT f m = SimpleTokenStateT $ runSimpleTokenStateT m . f >>= return
+execSimpleTokenStateT :: (Monad m)
+    => SimpleTokenStateT m a -> SimpleSystemData -> SimpleTokenData -> m SimpleTokenData
+execSimpleTokenStateT m sys token = runSimpleTokenStateT m sys token >>= return . snd
 
--- | SimpleTokenStateT State Operations
+-- | SimpleTokenStateT State Internal Operations
 --
-getSimpleTokenData :: (Monad m) => SimpleTokenStateT m SimpleTokenData
-getSimpleTokenData = SimpleTokenStateT (return . \s -> (s, s))
+_putSimpleTokenData :: (Monad m) => SimpleTokenData -> SimpleTokenStateT m ()
+_putSimpleTokenData = SimpleTokenStateT . put
 
-putSimpleTokenData :: (Monad m) => SimpleTokenData -> SimpleTokenStateT m ()
-putSimpleTokenData s = SimpleTokenStateT (return . \_ -> ((), s))
-
-modifySimpleTokenData :: (Monad m) => (SimpleTokenData -> SimpleTokenData) -> SimpleTokenStateT m ()
-modifySimpleTokenData f = SimpleTokenStateT (return . \s -> ((), f s))
+_modifySimpleTokenData :: (Monad m) => (SimpleTokenData -> SimpleTokenData) -> SimpleTokenStateT m ()
+_modifySimpleTokenData = SimpleTokenStateT . modify
 
 -- | SimpleTokenStateT m is a SuperfluidToken instance
 --
@@ -103,19 +103,19 @@ instance (Monad m) => SF.SuperfluidToken (SimpleTokenStateT m) where
     type SF_ADDR (SimpleTokenStateT m) = SimpleAddress
     type SF_ACC (SimpleTokenStateT m) = SimpleAccount
 
-    getCurrentTime = getSimpleTokenData >>= return . currentTime
+    getCurrentTime = getSystemData >>= return . currentTime
 
     execStorageInstructions t = mapM_ (\u -> case u of
         SF.UpdateLiquidity (addr, tbaLiquidity) -> do
             account <- SF.getAccount addr
-            modifySimpleTokenData (\vs -> vs {
+            _modifySimpleTokenData (\vs -> vs {
                 accounts = M.insert
                     addr
                     (SF.updateTBAAccountData account t tbaLiquidity)
                     (accounts vs)
             })
         SF.UpdateFlow (sender, receiver, flow) -> do
-            modifySimpleTokenData (\vs -> vs {
+            _modifySimpleTokenData (\vs -> vs {
                 cfaAgreements = M.insert
                     (show(sender)++":"++show(receiver))
                     flow
@@ -123,7 +123,7 @@ instance (Monad m) => SF.SuperfluidToken (SimpleTokenStateT m) where
             })
         SF.UpdateAccountFlow (addr, accountFlow) -> do
             account <- SF.getAccount addr
-            modifySimpleTokenData (\vs -> vs {
+            _modifySimpleTokenData (\vs -> vs {
                 accounts = M.insert
                     addr
                     (SF.updateCFAAccountData account t accountFlow)
@@ -143,23 +143,17 @@ instance (Monad m) => SF.SuperfluidToken (SimpleTokenStateT m) where
 
 -- | Other SimpleTokenStateT Operations
 --
-createSimpleToken :: SimpleTimestamp -> [(SimpleAddress, SimpleAccount)] -> SimpleTokenData
-createSimpleToken t alist = SimpleTokenData
-    { currentTime = t
-    , accounts = M.fromList alist
-    , cfaAgreements = M.fromList []
-    }
-
-initSimpleToken :: (Monad m)
-    => SimpleTimestamp -> [(SimpleAddress, SimpleAccount)] -> SimpleTokenStateT m SimpleTokenData
-initSimpleToken t alist = putSimpleTokenData (createSimpleToken t alist) >> getSimpleTokenData
-
-timeTravel :: (Monad m) => SimpleTimestamp -> SimpleTokenStateT m SimpleTimestamp
-timeTravel d = modifySimpleTokenData (\vs -> vs { currentTime = (currentTime vs) + d })
-    >> getSimpleTokenData >>= return . currentTime
+initSimpleToken :: (Monad m) => [SimpleAddress] -> Wad -> SimpleTokenStateT m ()
+initSimpleToken alist initBalance = do
+    t <- SF.getCurrentTime
+    _putSimpleTokenData SimpleTokenData
+        { accounts = M.fromList $ map (\a -> (a, createSimpleAccount a t)) alist
+        , cfaAgreements = M.fromList []
+        }
+    mapM_ (flip SF.mintLiquidity initBalance) alist
 
 addAccount :: (Monad m) => SimpleAddress -> SimpleAccount -> SimpleTokenStateT m ()
-addAccount accountAddr account = modifySimpleTokenData (\vs -> vs {
+addAccount accountAddr account = _modifySimpleTokenData (\vs -> vs {
     accounts = M.insert
         accountAddr
         account

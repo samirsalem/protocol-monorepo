@@ -4,7 +4,10 @@
 
 module Superfluid.Concepts.Account
     ( Account (..)
+    , sumAccounts
     ) where
+
+import           Data.Default
 
 import           Superfluid.BaseTypes                (Address, Liquidity, Timestamp)
 import           Superfluid.Concepts.Agreement       (AnyAgreementAccountData, providedBalanceOfAnyAgreement)
@@ -23,7 +26,7 @@ class (Liquidity lq, Timestamp ts, RealtimeBalance rtb lq, Address addr)
 
     addressOf :: acc -> addr
 
-    -- TODO return type polymorphism
+    -- TODO return type polymorphism using PolyKinds?
     -- getAgreement :: (AgreementAccountData aad lq ts) => acc -> aad
 
     agreementsOf :: acc -> [AnyAgreementAccountData lq ts rtb]
@@ -33,3 +36,8 @@ class (Liquidity lq, Timestamp ts, RealtimeBalance rtb lq, Address addr)
         (+)
         (liquidityToRTB . fromInteger $ 0)
         (map (flip providedBalanceOfAnyAgreement t) (agreementsOf holderAccount))
+
+sumAccounts
+    :: (Liquidity lq, Timestamp ts, RealtimeBalance rtb lq, Address addr, Account acc lq ts rtb addr)
+    => [acc] -> ts -> rtb
+sumAccounts alist t = foldr (+) def (map (flip balanceOfAt t) alist)

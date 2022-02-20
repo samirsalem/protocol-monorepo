@@ -14,7 +14,6 @@ module Superfluid.Instances.Simple.Types
     , createSimpleAddress
     , SimpleAccount
     , createSimpleAccount
-    , sumAllSimpleAccount
     , SimpleTBAAccountData
     , SimpleCFAContractData
     , SimpleCFAAccountData
@@ -164,9 +163,3 @@ instance SF.SuperfluidAccount SimpleAccount Wad SimpleTimestamp SimpleRealtimeBa
 
     -- updateCFAAccountData :: SimpleAccount -> SimpleTimestamp -> SimpleCFAAccountData -> SimpleAccount
     updateCFAAccountData acc t' cfa' = acc { cfa = cfa', lastUpdatedAt = t' }
-
-sumAllSimpleAccount :: [SimpleAccount] -> SimpleTimestamp -> SimpleRealtimeBalance
-sumAllSimpleAccount alist t = foldr
-    (+)
-    (def :: SimpleRealtimeBalance)
-    (map (flip ACC.balanceOfAt t) alist)

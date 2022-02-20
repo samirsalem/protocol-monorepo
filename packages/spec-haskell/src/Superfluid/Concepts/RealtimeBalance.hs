@@ -19,7 +19,7 @@ import           Superfluid.BaseTypes (Liquidity)
 --  * Type family name: SF_RTB
 --  * Term name: *RTB *Balance
 --
-class (Liquidity lq, Num rtb) => RealtimeBalance rtb lq | rtb -> lq where
+class (Liquidity lq, Num rtb, Default rtb) => RealtimeBalance rtb lq | rtb -> lq where
     availableBalance :: rtb -> lq
     toBalanceVector :: rtb -> [lq]
     fromBalanceVector :: [lq] -> rtb

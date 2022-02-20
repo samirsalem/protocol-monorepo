@@ -2,8 +2,10 @@ module Superfluid.Validator.Simulation
     -- SimMonad operations
     ( SimMonad
     , runSimMonad
-    , runTokenMonad
-    , runTokenMonadWithSimData
+    , getCurrentTime
+    , timeTravel
+    , runToken
+    , runSimTokenOp
     , createToken
     -- TokenMonad operations
     , TokenMonad
@@ -26,8 +28,8 @@ import           Superfluid.Instances.Simple.Types
     , SimpleAddress
     , SimpleRealtimeBalance
     , SimpleTimestamp
+    , Wad
     , createSimpleAddress
-    , sumAllSimpleAccount
     )
 
 -- ============================================================================
@@ -36,37 +38,44 @@ import           Superfluid.Instances.Simple.Types
 --   SimMonad    : SimState | IO
 --   TokenMonad  : SimpleTokenState | IO
 data SimData = SimData
-    { tokens      :: M.Map String SF.SimpleTokenData
+    { sfSys  :: SF.SimpleSystemData
+    , tokens :: M.Map String SF.SimpleTokenData
     }
 type SimMonad = StateT SimData IO
 
 type TokenMonad = SF.SimpleTokenStateT IO
 
 runSimMonad :: SimMonad () -> IO ()
-runSimMonad = flip evalStateT SimData { tokens = def }
+runSimMonad = flip evalStateT SimData
+    { sfSys = SF.SimpleSystemData { SF.currentTime = 0}
+    , tokens = def
+    }
 
 -- ============================================================================
 -- | SimMonad Operations
 --
-runTokenMonadWithSimData :: HasCallStack => String -> (SimData -> TokenMonad a) -> SimMonad a
-runTokenMonadWithSimData tokenId mf = do
+getCurrentTime :: HasCallStack => SimMonad SimpleTimestamp
+getCurrentTime = get >>= return . SF.currentTime . sfSys
+
+timeTravel :: HasCallStack => SimpleTimestamp -> SimMonad ()
+timeTravel d = modify (\vs -> vs { sfSys = (sfSys vs) { SF.currentTime = (+ d) . SF.currentTime . sfSys $ vs } })
+
+runSimTokenOp :: HasCallStack => String -> (SimData -> TokenMonad a) -> SimMonad a
+runSimTokenOp tokenId mf = do
     s <- get
-    (a, token') <- case M.lookup tokenId (tokens s) of
-                        Just token -> liftIO $ SF.runSimpleTokenStateT (mf s) token
-                        Nothing    -> error $ "No such tokenId: " ++ tokenId
-    put s { tokens = M.insert tokenId token' (tokens s) }
+    let token' = M.findWithDefault def tokenId (tokens s)
+    (a, token'') <- liftIO $ SF.runSimpleTokenStateT (mf s) (sfSys s) token'
+    modify (\vs -> vs { tokens = M.insert tokenId token'' (tokens s) })
     return a
 
-runTokenMonad :: HasCallStack => String -> TokenMonad a -> SimMonad a
-runTokenMonad tokenId m = runTokenMonadWithSimData tokenId (const m)
+runToken :: HasCallStack => String -> TokenMonad a -> SimMonad a
+runToken tokenId m = runSimTokenOp tokenId (const m)
 
-createToken :: HasCallStack => SimpleTimestamp -> String -> [(SimpleAddress, SimpleAccount)] -> SimMonad ()
-createToken t tokenId alist = modify (\vs -> vs {
-        tokens = M.insert tokenId (SF.createSimpleToken t alist) (tokens vs)
-    })
+createToken :: HasCallStack => String -> [SimpleAddress] -> Wad -> SimMonad ()
+createToken tokenId alist initBalance = runToken tokenId $ SF.initSimpleToken alist initBalance
 
 -- ============================================================================
--- | TokenMonad Operations
+-- | Sim Operations
 --
 getAccountByAlias :: HasCallStack => String -> SimData -> TokenMonad SimpleAccount
 getAccountByAlias alias _= SF.getAccount $ fromJust $ createSimpleAddress alias
@@ -83,7 +92,7 @@ sumTotalLiquidity :: HasCallStack => SimData -> TokenMonad SimpleRealtimeBalance
 sumTotalLiquidity _ = do
     t <- SF.getCurrentTime
     accounts <- SF.listAccounts
-    return $ sumAllSimpleAccount (map snd accounts) t
+    return $ SF.sumAccounts (map snd accounts) t
 
 printTokenState :: HasCallStack => SimData -> TokenMonad ()
 printTokenState s = do
