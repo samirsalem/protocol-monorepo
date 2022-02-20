@@ -1,4 +1,4 @@
-module Superfluid.BaseTypes where
+module Superfluid.Concepts.BaseTypes where
 
 import           Data.Default
 
@@ -21,6 +21,6 @@ class (Default ts, Integral ts, Ord ts, Show ts) => Timestamp ts
 -- | Address Type Class
 --
 -- Naming conventions:
---  * Type name: ts
---  * Type family name: SF_TS
+--  * Type name: addr
+--  * Type family name: SF_ADDR
 class (Eq addr, Show addr) => Address addr

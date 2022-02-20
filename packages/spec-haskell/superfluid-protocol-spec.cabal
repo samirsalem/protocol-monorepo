@@ -13,8 +13,9 @@ extra-source-files: CHANGELOG.md
 
 library core
     exposed-modules:
-        Superfluid.BaseTypes
+        Superfluid.Concepts.BaseTypes
         Superfluid.Concepts.RealtimeBalance
+        Superfluid.Concepts.SuperfluidTypes
         Superfluid.Concepts.Agreement
         Superfluid.Concepts.Account
         Superfluid.Agreements.TransferableBalanceAgreement
@@ -33,7 +34,7 @@ library core
 
 library simple
     exposed-modules:
-        Superfluid.Instances.Simple.Types
+        Superfluid.Instances.Simple.SuperfluidTypes
         Superfluid.Instances.Simple.System
 
     visibility:       public

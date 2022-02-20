@@ -9,14 +9,14 @@ import           Test.HUnit
 import qualified Superfluid.Agreements.ConstantFlowAgreement as CFA
 import qualified Superfluid.Concepts.RealtimeBalance         as RTB
 
-import qualified Superfluid.Instances.Simple.System          as SF
-import           Superfluid.Instances.Simple.Types
+import           Superfluid.Instances.Simple.SuperfluidTypes
     ( SimpleAddress
     , SimpleTimestamp
     , Wad
     , createSimpleAddress
     , toWad
     )
+import qualified Superfluid.Instances.Simple.System          as SF
 
 
 cINIT_BALANCE :: Wad
@@ -83,7 +83,7 @@ createTestAccount addr initBalance = runToken $ do
 --
 expectAccountBalanceTo :: String -> SimpleAddress -> (Wad -> Bool) -> TokenTester ()
 expectAccountBalanceTo label addr expr = do
-    balance <- runToken $ SF.balanceOf addr
+    balance <- runToken $ SF.balanceOfAccount addr
     liftIO $ assertBool label (expr . RTB.liquidityFromRTB $ balance)
 
 expeceTotalBalanceTo :: String -> (Wad -> Bool) -> TokenTester ()

@@ -2,11 +2,11 @@ module Superfluid.Validator.Demo (demo) where
 
 import           Control.Monad.IO.Class
 import           Data.Maybe
-import           Data.Time.Clock.POSIX              (getPOSIXTime)
+import           Data.Time.Clock.POSIX                       (getPOSIXTime)
 import           GHC.Stack
 
-import qualified Superfluid.Instances.Simple.System as SF
-import           Superfluid.Instances.Simple.Types  (SimpleTimestamp, Wad, createSimpleAddress, toWad)
+import           Superfluid.Instances.Simple.SuperfluidTypes (SimpleTimestamp, Wad, createSimpleAddress, toWad)
+import qualified Superfluid.Instances.Simple.System          as SF
 
 import           Superfluid.Validator.Simulation
 

@@ -1,4 +1,3 @@
-{-# LANGUAGE FlexibleContexts       #-}
 {-# LANGUAGE FlexibleInstances      #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses  #-}
@@ -10,12 +9,13 @@ module Superfluid.Concepts.RealtimeBalance
 
 import           Data.Default
 
-import           Superfluid.BaseTypes (Liquidity)
+import           Superfluid.Concepts.BaseTypes (Liquidity)
 
 
 -- | RealtimeBalance Type Class
 --
 -- Naming conventions:
+--  * Type name : rtb
 --  * Type family name: SF_RTB
 --  * Term name: *RTB *Balance
 --

@@ -18,19 +18,18 @@ module Superfluid.Validator.Simulation
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.State
 import           Data.Default
-import qualified Data.Map                           as M
+import qualified Data.Map                                    as M
 import           Data.Maybe
 import           GHC.Stack
 
-import qualified Superfluid.Instances.Simple.System as SF
-import           Superfluid.Instances.Simple.Types
-    ( SimpleAccount
-    , SimpleAddress
+import           Superfluid.Instances.Simple.SuperfluidTypes
+    ( SimpleAddress
     , SimpleRealtimeBalance
     , SimpleTimestamp
     , Wad
     , createSimpleAddress
     )
+import qualified Superfluid.Instances.Simple.System          as SF
 
 -- ============================================================================
 -- | Simulation Monad Stacks
@@ -77,13 +76,13 @@ createToken tokenId alist initBalance = runToken tokenId $ SF.initSimpleToken al
 -- ============================================================================
 -- | Sim Operations
 --
-getAccountByAlias :: HasCallStack => String -> SimData -> TokenMonad SimpleAccount
+getAccountByAlias :: HasCallStack => String -> SimData -> TokenMonad SF.SimpleAccount
 getAccountByAlias alias _= SF.getAccount $ fromJust $ createSimpleAddress alias
 
-printAccount :: HasCallStack => SimpleAccount -> SimData -> TokenMonad ()
+printAccount :: HasCallStack => SF.SimpleAccount -> SimData -> TokenMonad ()
 printAccount acc _ = do
     t <- SF.getCurrentTime
-    liftIO $ putStrLn $ SF.showAt acc t ++ "\n"
+    liftIO $ putStrLn $ SF.showAccountAt acc t ++ "\n"
 
 printAccountByAlias :: HasCallStack => String -> SimData -> TokenMonad ()
 printAccountByAlias alias s = getAccountByAlias alias s >>= flip printAccount s

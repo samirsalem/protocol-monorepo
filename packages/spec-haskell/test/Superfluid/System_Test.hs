@@ -3,8 +3,8 @@ module Superfluid.System_Test where
 import           Control.Monad.IO.Class
 import           Test.HUnit
 
-import qualified Superfluid.Instances.Simple.System as SF
-import           Superfluid.Instances.Simple.Types  (toWad)
+import           Superfluid.Instances.Simple.SuperfluidTypes (toWad)
+import qualified Superfluid.Instances.Simple.System          as SF
 
 import           TokenTester
 

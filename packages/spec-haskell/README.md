@@ -33,9 +33,13 @@ Packages
 
 ## Core Library
 
-The core library exposes the _Base Types_, _Concepts_, _Agreements_ and _System_ modules.
+The core library exposes the _Concepts_, _Agreements_ and _System_ modules.
 
-### Base Types Module
+### Concepts Module
+
+These are the core Superfluid protocol concepts expressed in multi-parameter type classes.
+
+#### Superfluid Types
 
 **Timestamp**
 
@@ -51,13 +55,11 @@ attach different meaning to, such as demand deposit, safety deposit, app loan & 
 
 `class Address addr` type class describe types (`Eq addr`) which addresses the accounts in a _Superfluid system_.
 
-### Concepts Modules
-
-These are the core Superfluid protocol concepts expressed in multi-parameter type classes.
-
 **RealtimeBalance**
 
-`class RealtimeBalance rtb lq` type class describes a vector of liquidity, such that
+`class RealtimeBalance rtb lq` type class describes a vector of liquidity... TODO more explanations.
+
+#### Core Concepts
 
 **Agreement**
 

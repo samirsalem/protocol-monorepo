@@ -1,5 +1,6 @@
-{-# LANGUAGE GADTs                 #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE GADTs                  #-}
+{-# LANGUAGE MultiParamTypeClasses  #-}
 
 module Superfluid.Concepts.Agreement
     ( AgreementContractData
@@ -10,46 +11,47 @@ module Superfluid.Concepts.Agreement
 
 import           Data.Default
 
-import           Superfluid.BaseTypes                (Liquidity, Timestamp)
-import           Superfluid.Concepts.RealtimeBalance (RealtimeBalance)
+import           Superfluid.Concepts.SuperfluidTypes (Liquidity, RealtimeBalance, Timestamp)
 
-
+-- ============================================================================
 -- | AgreementContractData type class
 --
 -- Naming conventions:
 --  * Type name: acd
---  * Term name: *ACD
 class (Liquidity lq, RealtimeBalance rtb lq, Timestamp ts, Default acd, Show acd)
-    => AgreementContractData acd lq ts rtb where
+    => AgreementContractData acd lq ts rtb
+    | acd -> lq, acd -> ts, acd -> rtb where
 
+-- ============================================================================
 -- | AgreementAccountData type class
 --
 -- Naming conventions:
 --  - Type name: aad
---  - Term name: *AAD
 class (Liquidity lq, RealtimeBalance rtb lq, Timestamp ts, Default aad, Show aad)
-    => AgreementAccountData aad lq ts rtb where
+    => AgreementAccountData aad lq ts rtb
+    | aad -> lq, aad -> ts, aad -> rtb where
 
-    providedBalanceOf :: aad -> ts -> rtb
+    providedBalanceOfAgreement :: aad -> ts -> rtb
 
+-- ============================================================================
 -- | AnyAgreementAccountData type
 --
 -- Naming conventions:
 --  - Type name: aad
---  - Term name: AAAD
+--  - Term name: anyAgreement
 --
 -- Notes:
 -- - To Enumerate all supported agreements using GADTs
 --   See: https://wiki.haskell.org/Heterogenous_collections
 -- - MkAgreementAccountData is the constructor
--- - providedBalanceOfAnyAgreement is convenience wrapper of providedBalanceOf
+-- - providedBalanceOfAnyAgreement is convenience wrapper of providedBalanceOfAgreement
 data AnyAgreementAccountData lq ts rtb where
     MkAgreementAccountData
         :: (Liquidity lq, Timestamp ts, RealtimeBalance rtb lq, AgreementAccountData aad lq ts rtb)
         => aad -> AnyAgreementAccountData lq ts rtb
 
--- | providedBalanceOf wrapper for AnyAgreementAccountData
+-- | providedBalanceOfAgreement wrapper for AnyAgreementAccountData
 providedBalanceOfAnyAgreement
     :: (Liquidity lq, Timestamp ts, RealtimeBalance rtb lq)
     => AnyAgreementAccountData lq ts rtb -> ts -> rtb
-providedBalanceOfAnyAgreement (MkAgreementAccountData g) = providedBalanceOf g
+providedBalanceOfAnyAgreement (MkAgreementAccountData g) = providedBalanceOfAgreement g
