@@ -18,18 +18,11 @@ module Superfluid.Validator.Simulation
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.State
 import           Data.Default
-import qualified Data.Map                                    as M
+import qualified Data.Map                           as M
 import           Data.Maybe
 import           GHC.Stack
 
-import           Superfluid.Instances.Simple.SuperfluidTypes
-    ( SimpleAddress
-    , SimpleRealtimeBalance
-    , SimpleTimestamp
-    , Wad
-    , createSimpleAddress
-    )
-import qualified Superfluid.Instances.Simple.System          as SF
+import qualified Superfluid.Instances.Simple.System as SF
 
 -- ============================================================================
 -- | Simulation Monad Stacks
@@ -53,10 +46,10 @@ runSimMonad = flip evalStateT SimData
 -- ============================================================================
 -- | SimMonad Operations
 --
-getCurrentTime :: HasCallStack => SimMonad SimpleTimestamp
+getCurrentTime :: HasCallStack => SimMonad SF.SimpleTimestamp
 getCurrentTime = get >>= return . SF.currentTime . sfSys
 
-timeTravel :: HasCallStack => SimpleTimestamp -> SimMonad ()
+timeTravel :: HasCallStack => SF.SimpleTimestamp -> SimMonad ()
 timeTravel d = modify (\vs -> vs { sfSys = (sfSys vs) { SF.currentTime = (+ d) . SF.currentTime . sfSys $ vs } })
 
 runSimTokenOp :: HasCallStack => String -> (SimData -> TokenMonad a) -> SimMonad a
@@ -70,14 +63,14 @@ runSimTokenOp tokenId mf = do
 runToken :: HasCallStack => String -> TokenMonad a -> SimMonad a
 runToken tokenId m = runSimTokenOp tokenId (const m)
 
-createToken :: HasCallStack => String -> [SimpleAddress] -> Wad -> SimMonad ()
+createToken :: HasCallStack => String -> [SF.SimpleAddress] -> SF.Wad -> SimMonad ()
 createToken tokenId alist initBalance = runToken tokenId $ SF.initSimpleToken alist initBalance
 
 -- ============================================================================
 -- | Sim Operations
 --
 getAccountByAlias :: HasCallStack => String -> SimData -> TokenMonad SF.SimpleAccount
-getAccountByAlias alias _= SF.getAccount $ fromJust $ createSimpleAddress alias
+getAccountByAlias alias _= SF.getAccount $ fromJust $ SF.createSimpleAddress alias
 
 printAccount :: HasCallStack => SF.SimpleAccount -> SimData -> TokenMonad ()
 printAccount acc _ = do
@@ -87,7 +80,7 @@ printAccount acc _ = do
 printAccountByAlias :: HasCallStack => String -> SimData -> TokenMonad ()
 printAccountByAlias alias s = getAccountByAlias alias s >>= flip printAccount s
 
-sumTotalLiquidity :: HasCallStack => SimData -> TokenMonad SimpleRealtimeBalance
+sumTotalLiquidity :: HasCallStack => SimData -> TokenMonad SF.SimpleRealtimeBalance
 sumTotalLiquidity _ = do
     t <- SF.getCurrentTime
     accounts <- SF.listAccounts

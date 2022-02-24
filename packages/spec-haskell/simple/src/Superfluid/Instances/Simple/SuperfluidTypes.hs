@@ -9,17 +9,13 @@ module Superfluid.Instances.Simple.SuperfluidTypes
     , wad4human
     , SimpleTimestamp
     , SimpleRealtimeBalance
-    , SimpleAddress
-    , createSimpleAddress
     ) where
 
-import           Data.Char
 import           Data.Default
 import           Text.Printf                         (printf)
 
 import           Superfluid.Concepts.SuperfluidTypes
-    ( Address
-    , Liquidity
+    ( Liquidity
     , RealtimeBalance (..)
     , RealtimeBalanceAsNum (..)
     , Timestamp
@@ -88,15 +84,3 @@ instance Show SimpleRealtimeBalance where
         ++ show d ++ "@d, "
         ++ show od ++ "@od"
         ++ ")"
-
--- ============================================================================
--- SimpleAddress Base Type
---
-newtype SimpleAddress = SimpleAddress String deriving (Eq, Ord, Address)
-
--- SimpleAddress public constructor
-createSimpleAddress :: String -> Maybe SimpleAddress
-createSimpleAddress a = if (all isAlpha a) then Just $ SimpleAddress a else Nothing
-
-instance Show SimpleAddress where
-    show (SimpleAddress a) = a

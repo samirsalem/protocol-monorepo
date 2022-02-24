@@ -1,6 +1,10 @@
 CABAL ?= cabal
 TEST_TARGET ?= test-suite
 
+default: build
+
+.PHONY: build
+
 prepare:
 	$(CABAL) v2-update
 

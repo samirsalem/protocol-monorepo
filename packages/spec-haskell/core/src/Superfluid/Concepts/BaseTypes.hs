@@ -17,10 +17,3 @@ class (Default lq, Num lq, Ord lq, Show lq) => Liquidity lq where
 --  * Type name: ts
 --  * Type family name: SF_TS
 class (Default ts, Integral ts, Ord ts, Show ts) => Timestamp ts
-
--- | Address Type Class
---
--- Naming conventions:
---  * Type name: addr
---  * Type family name: SF_ADDR
-class (Eq addr, Show addr) => Address addr

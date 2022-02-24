@@ -16,10 +16,8 @@ import           Superfluid.Concepts.RealtimeBalance
 --
 class ( Liquidity (SF_LQ sft)
       , Timestamp (SF_TS sft)
-      , Address (SF_ADDR sft)
       , RealtimeBalance (SF_RTB sft) (SF_LQ sft)
       ) => SuperfluidTypes sft where
     type SF_LQ sft :: *
     type SF_TS sft :: *
-    type SF_ADDR sft :: *
     type SF_RTB sft :: *

@@ -4,7 +4,17 @@
 
 module Superfluid.Instances.Simple.System
     ( module Superfluid.Instances.Simple.SuperfluidTypes
+    -- SimpleAddress
+    , SimpleAddress
+    , createSimpleAddress
+    -- SimpleAccount
     , SimpleAccount
+    , SF.Account (..)
+    , SF.balanceOfAccountAt
+    , SF.sumAccounts
+    , listAccounts
+    , addAccount
+    -- SuperfluidToken
     , SimpleSystemData (..)
     , SimpleTokenData
     , SimpleTokenStateT
@@ -12,23 +22,18 @@ module Superfluid.Instances.Simple.System
     , evalSimpleTokenStateT
     , execSimpleTokenStateT
     , getSimpleTokenData
-    , ACC.Account (..)
-    , SF.SuperfluidAccount (..)
     , SF.SuperfluidToken (..)
-    , initSimpleToken
-    , addAccount
-    , listAccounts
-    , ACC.sumAccounts)
+    , initSimpleToken)
     where
 
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Class
 import           Control.Monad.Trans.Reader
 import           Control.Monad.Trans.State
+import           Data.Char
 import           Data.Default
 import qualified Data.Map                                           as M
 
-import qualified Superfluid.Concepts.Account                        as ACC
 import           Superfluid.Concepts.Agreement                      (AnyAgreementAccountData (MkAgreementAccountData))
 --
 import qualified Superfluid.Agreements.ConstantFlowAgreement        as CFA
@@ -36,11 +41,18 @@ import qualified Superfluid.Agreements.TransferableBalanceAgreement as TBA
 import qualified Superfluid.System                                  as SF
 
 import           Superfluid.Instances.Simple.SuperfluidTypes
-    ( SimpleAddress
-    , SimpleRealtimeBalance
-    , SimpleTimestamp
-    , Wad
-    )
+
+
+-- ============================================================================
+-- SimpleAddress Base Type
+--
+newtype SimpleAddress = SimpleAddress String deriving (Eq, Ord, Show)
+
+instance SF.Address SimpleAddress
+
+-- SimpleAddress public constructor
+createSimpleAddress :: String -> Maybe SimpleAddress
+createSimpleAddress a = if (all isAlpha a) then Just $ SimpleAddress a else Nothing
 
 -- ============================================================================
 -- Simple Types for Agreements
@@ -59,10 +71,15 @@ data SimpleAccount = SimpleAccount
     , lastUpdatedAt :: SimpleTimestamp
     }
 
-instance ACC.Account SimpleAccount Wad SimpleTimestamp SimpleRealtimeBalance SimpleAddress where
+instance SF.Account SimpleAccount Wad SimpleTimestamp SimpleRealtimeBalance SimpleAddress where
+
+    getTBAAccountData = tba
+
+    getCFAAccountData = cfa
+
     showAccountAt a t =
         "Account @" ++ show(address a) ++
-        "\n  Balance: " ++ show((ACC.balanceOfAccountAt a t) :: SimpleRealtimeBalance) ++
+        "\n  Balance: " ++ show((SF.balanceOfAccountAt a t) :: SimpleRealtimeBalance) ++
         "\n  TBA: " ++ show(tba a) ++
         "\n  CFA: " ++ show(cfa a) ++
         "\n  Last Update: " ++ show(lastUpdatedAt a)
@@ -73,10 +90,6 @@ instance ACC.Account SimpleAccount Wad SimpleTimestamp SimpleRealtimeBalance Sim
         [ MkAgreementAccountData $ tba a
         , MkAgreementAccountData $ cfa a
         ]
-
-instance SF.SuperfluidAccount SimpleAccount Wad SimpleTimestamp SimpleRealtimeBalance SimpleAddress where
-    getTBAAccountData = tba
-    getCFAAccountData = cfa
 
 _createSimpleAccount :: SimpleAddress -> SimpleTimestamp -> SimpleAccount
 _createSimpleAccount toAddress t = SimpleAccount

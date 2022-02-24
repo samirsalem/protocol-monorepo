@@ -9,21 +9,14 @@ import           Test.HUnit
 import qualified Superfluid.Agreements.ConstantFlowAgreement as CFA
 import qualified Superfluid.Concepts.RealtimeBalance         as RTB
 
-import           Superfluid.Instances.Simple.SuperfluidTypes
-    ( SimpleAddress
-    , SimpleTimestamp
-    , Wad
-    , createSimpleAddress
-    , toWad
-    )
 import qualified Superfluid.Instances.Simple.System          as SF
 
 
-cINIT_BALANCE :: Wad
-cINIT_BALANCE = toWad (100.0 :: Double)
+cINIT_BALANCE :: SF.Wad
+cINIT_BALANCE = SF.toWad (100.0 :: Double)
 
-cZERO_WAD :: Wad
-cZERO_WAD = toWad (0 :: Double)
+cZERO_WAD :: SF.Wad
+cZERO_WAD = SF.toWad (0 :: Double)
 
 -- ============================================================================
 -- | TokenTester TestCase Creator
@@ -39,11 +32,11 @@ type TokenTester = StateT TokenTesterData IO
 data TokenTestSpec = TokenTestSpec
     { testLabel              :: String
     , testAddressesToInit    :: [String]
-    , testAccountInitBalance :: Wad
+    , testAccountInitBalance :: SF.Wad
     }
 
 data TokenTestContext = TokenTestContext
-    { testAddresses :: [SimpleAddress]
+    { testAddresses :: [SF.SimpleAddress]
     }
 
 data TokenTestCase = TokenTestCase TokenTestSpec (TokenTestContext -> TokenTester ())
@@ -51,7 +44,7 @@ data TokenTestCase = TokenTestCase TokenTestSpec (TokenTestContext -> TokenTeste
 createTokenTestCase :: TokenTestCase -> Test
 createTokenTestCase (TokenTestCase spec runner) = TestLabel (testLabel spec) $ TestCase $ do
     evalStateT (do
-        let addresses = map (fromJust . createSimpleAddress) (testAddressesToInit spec)
+        let addresses = map (fromJust . SF.createSimpleAddress) (testAddressesToInit spec)
         mapM_ (flip createTestAccount (testAccountInitBalance spec)) addresses
         runner TokenTestContext { testAddresses = addresses }
         ) TokenTesterData
@@ -62,7 +55,7 @@ createTokenTestCase (TokenTestCase spec runner) = TestLabel (testLabel spec) $ T
 -- ============================================================================
 -- | TokenTester Operations
 --
-timeTravel :: SimpleTimestamp -> TokenTester ()
+timeTravel :: SF.SimpleTimestamp -> TokenTester ()
 timeTravel d = modify (\vs -> vs { sfSys = (sfSys vs) { SF.currentTime = (+ d) . SF.currentTime . sfSys $ vs } })
 
 runToken :: TokenMonad a -> TokenTester a
@@ -72,7 +65,7 @@ runToken m = do
     modify (\vs -> vs { token = token' })
     return a
 
-createTestAccount :: SimpleAddress -> Wad -> TokenTester ()
+createTestAccount :: SF.SimpleAddress -> SF.Wad -> TokenTester ()
 createTestAccount addr initBalance = runToken $ do
     SF.mintLiquidity addr initBalance
     acc <- SF.getAccount addr
@@ -81,18 +74,18 @@ createTestAccount addr initBalance = runToken $ do
 -- ============================================================================
 -- | TokenTester Assertions
 --
-expectAccountBalanceTo :: String -> SimpleAddress -> (Wad -> Bool) -> TokenTester ()
+expectAccountBalanceTo :: String -> SF.SimpleAddress -> (SF.Wad -> Bool) -> TokenTester ()
 expectAccountBalanceTo label addr expr = do
     balance <- runToken $ SF.balanceOfAccount addr
     liftIO $ assertBool label (expr . RTB.liquidityFromRTB $ balance)
 
-expeceTotalBalanceTo :: String -> (Wad -> Bool) -> TokenTester ()
+expeceTotalBalanceTo :: String -> (SF.Wad -> Bool) -> TokenTester ()
 expeceTotalBalanceTo label expr = do
     t <- runToken $ SF.getCurrentTime
     accounts <- runToken $ SF.listAccounts
     liftIO $ assertBool label (expr . RTB.availableBalance $ SF.sumAccounts (map snd accounts) t)
 
-expectCFANetFlowRateTo :: String -> SimpleAddress -> (Wad -> Bool) -> TokenTester ()
+expectCFANetFlowRateTo :: String -> SF.SimpleAddress -> (SF.Wad -> Bool) -> TokenTester ()
 expectCFANetFlowRateTo label addr expr = do
     account <- runToken $ SF.getAccount addr
     liftIO $ assertBool label (expr . CFA.getNetFlowRate . SF.getCFAAccountData $ account)

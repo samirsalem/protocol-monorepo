@@ -1,31 +1,73 @@
 {-# LANGUAGE FlexibleContexts       #-}
+{-# LANGUAGE FlexibleInstances      #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GADTs                  #-}
 {-# LANGUAGE MultiParamTypeClasses  #-}
 {-# LANGUAGE TypeFamilies           #-}
 
 module Superfluid.System
-    ( SuperfluidAccount (..)
+    ( Address
+    , Account (..)
+    , balanceOfAccountAt
+    , sumAccounts
     , SFStorageInstruction (..)
     , SuperfluidToken (..)
     ) where
 
 import           Control.Monad                                      (Monad)
+import           Data.Default
 
-import           Superfluid.Concepts.Account                        (Account, balanceOfAccountAt)
-import           Superfluid.Concepts.SuperfluidTypes                (Address, Liquidity, RealtimeBalance, Timestamp)
+import           Superfluid.Concepts.Agreement
+    ( AnyAgreementAccountData
+    , providedBalanceOfAnyAgreement
+    )
+import           Superfluid.Concepts.RealtimeBalance                (liquidityToRTB)
+import           Superfluid.Concepts.SuperfluidTypes                (Liquidity, RealtimeBalance, Timestamp)
 --
 import qualified Superfluid.Agreements.ConstantFlowAgreement        as CFA
 import qualified Superfluid.Agreements.TransferableBalanceAgreement as TBA
 
 
--- ============================================================================
--- | SuperfluidAccount
+-- | Address Type Class
 --
-class (Liquidity lq, Timestamp ts, RealtimeBalance rtb lq, Address addr, Account acc lq ts rtb addr)
-    => SuperfluidAccount acc lq ts rtb addr where
+-- Naming conventions:
+--  * Type name: addr
+--  * Type family name: SF_ADDR
+class (Eq addr, Show addr) => Address addr
+
+-- | Account type class
+--
+-- Naming conventions:
+--   * Type name: acc
+--   * Type family name: SF_ACC
+--   * Term name: *Account
+class (Liquidity lq, Timestamp ts, RealtimeBalance rtb lq, Address addr)
+    => Account acc lq ts rtb addr
+    | acc -> lq, acc -> ts, acc -> addr, acc -> rtb where
+
     getTBAAccountData :: acc -> TBA.TBAAccountData lq ts rtb
+
     getCFAAccountData :: acc -> CFA.CFAAccountData lq ts rtb
+
+    showAccountAt :: acc -> ts -> String
+
+    addressOfAccount :: acc -> addr
+
+    agreementsOfAccount :: acc -> [AnyAgreementAccountData lq ts rtb]
+
+
+balanceOfAccountAt
+    :: (Liquidity lq, Timestamp ts, RealtimeBalance rtb lq, Address addr, Account acc lq ts rtb addr)
+    => acc -> ts -> rtb
+balanceOfAccountAt holderAccount t = foldr
+    (+)
+    (liquidityToRTB . fromInteger $ 0)
+    (map (flip providedBalanceOfAnyAgreement t) (agreementsOfAccount holderAccount))
+
+sumAccounts
+    :: (Liquidity lq, Timestamp ts, RealtimeBalance rtb lq, Address addr, Account acc lq ts rtb addr)
+    => [acc] -> ts -> rtb
+sumAccounts alist t = foldr (+) def (map (flip balanceOfAccountAt t) alist)
 
 -- ============================================================================
 -- | SFStorageInstruction Sum Type
@@ -58,7 +100,7 @@ class ( Monad tk
       , Timestamp (SF_TS tk)
       , Address (SF_ADDR tk)
       , RealtimeBalance (SF_RTB tk) (SF_LQ tk)
-      , SuperfluidAccount (SF_ACC tk) (SF_LQ tk) (SF_TS tk) (SF_RTB tk)(SF_ADDR tk))
+      , Account (SF_ACC tk) (SF_LQ tk) (SF_TS tk) (SF_RTB tk)(SF_ADDR tk))
     => SuperfluidToken tk where
 
     -- Associated type families
