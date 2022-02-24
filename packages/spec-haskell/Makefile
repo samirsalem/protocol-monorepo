@@ -1,15 +1,21 @@
 CABAL ?= cabal
 TEST_TARGET ?= test-suite
 
+prepare:
+	$(CABAL) v2-update
+
+.PHONY: prepare
+
 build:
-	$(CABAL) v2-build
+	$(CABAL) v2-build all
 
 clean:
-	$(CABAL) v1-clean
 	$(CABAL) v2-clean
 
+.PHONY: build clean
+
 test-suite:
-	$(CABAL) v2-test
+	$(CABAL) v2-test superfluid-protocol-validator
 
 test-demo:
 	$(CABAL) v2-exec -- superfluid-protocol-validator --demo
@@ -19,12 +25,14 @@ test: $(TEST_TARGET)
 dev:
 	npx nodemon -e hs,cabal -i dist -i dist-newstyle -x "make build test || exit 1"
 
+.PHONY: test-suite test-demo test dev
+
 loc:
 	@echo '**** Core Source Files ****'
-	find src simple validator -name '*.hs' | xargs wc -l 
+	find core/src -name '*.hs' | xargs wc -l
 	@echo '**** Non-Core Source Files ****'
-	find simple validator -name '*.hs' | xargs wc -l 
+	find simple/src validator/src -name '*.hs' | xargs wc -l
 	@echo '**** Test Files ****'
-	find test -name '*.hs' | xargs wc -l
+	find */test -name '*.hs' | xargs wc -l
 
-.PHONY: build clean test-suite test-demo test dev loc
+.PHONY: loc
